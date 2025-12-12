@@ -1,0 +1,31 @@
+site_url: http://localhost:4321
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "spots"
+    label: "旅游景点"
+    folder: "src/content/spots"
+    create: true
+    fields:
+      - { label: "景点名称", name: "title", widget: "string" }
+      - { label: "所在城市", name: "city", widget: "string" }
+      - { label: "简介", name: "description", widget: "string" }
+      - { label: "最佳季节", name: "season", widget: "string" }
+      - { label: "封面图片", name: "image", widget: "image" }
+      - { label: "详细介绍", name: "body", widget: "markdown" }
+
+  - name: "guides"
+    label: "旅游攻略"
+    folder: "src/content/guides"
+    create: true
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "简介", name: "description", widget: "string" }
+      - { label: "日期", name: "date", widget: "datetime" }
+      - { label: "封面图片", name: "image", widget: "image" }
+      - { label: "内容", name: "body", widget: "markdown" }
