@@ -1,13 +1,10 @@
 import { defineConfig } from 'astro/config';
-
-import tailwindcss from '@tailwindcss/vite';
+import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'http://localhost:4322',
+  site: 'http://localhost:4321',
   base: '/',
   trailingSlash: 'ignore',
-
-  vite: {
-    plugins: [tailwindcss()],
-  },
+  
+  integrations: [tailwind()],
 });
