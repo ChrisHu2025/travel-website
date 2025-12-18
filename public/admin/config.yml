@@ -1,4 +1,4 @@
-site_url: http://localhost:4321
+site_url: https://explorechina.travel
 backend:
   name: git-gateway
   branch: main
@@ -8,24 +8,49 @@ public_folder: "/images"
 
 collections:
   - name: "spots"
-    label: "旅游景点"
-    folder: "src/content/spots"
+    label: "Destinations"
+    folder: "src/content/destinations"
     create: true
     fields:
-      - { label: "景点名称", name: "title", widget: "string" }
-      - { label: "所在城市", name: "city", widget: "string" }
-      - { label: "简介", name: "description", widget: "string" }
-      - { label: "最佳季节", name: "season", widget: "string" }
-      - { label: "封面图片", name: "image", widget: "image" }
-      - { label: "详细介绍", name: "body", widget: "markdown" }
+      - { label: "Destination Name", name: "title", widget: "string" }
+      - { label: "City/Region", name: "city", widget: "string" }
+      - { label: "Region", name: "region", widget: "string" }
+      - { label: "Summary", name: "summary", widget: "string" }
+      - { label: "Best Season", name: "season", widget: "string" }
+      - { label: "Cover Image", name: "image", widget: "image" }
+      - { label: "Detailed Introduction", name: "body", widget: "markdown" }
 
-  - name: "guides"
-    label: "旅游攻略"
-    folder: "src/content/guides"
+  - name: "in-season"
+    label: "In Season"
+    folder: "src/content/in-season"
     create: true
     fields:
-      - { label: "标题", name: "title", widget: "string" }
-      - { label: "简介", name: "description", widget: "string" }
-      - { label: "日期", name: "date", widget: "datetime" }
-      - { label: "封面图片", name: "image", widget: "image" }
-      - { label: "内容", name: "body", widget: "markdown" }
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Season", name: "season", widget: "string" }
+      - { label: "Description", name: "description", widget: "string" }
+      - { label: "Cover Image", name: "image", widget: "image" }
+      - { label: "Content", name: "body", widget: "markdown" }
+
+  - name: "resorts"
+    label: "Resorts & Getaways"
+    folder: "src/content/resorts"
+    create: true
+    fields:
+      - { label: "Resort Name", name: "title", widget: "string" }
+      - { label: "Location", name: "location", widget: "string" }
+      - { label: "Category", name: "category", widget: "string" }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Cover Image", name: "image", widget: "image" }
+      - { label: "Full Content", name: "body", widget: "markdown" }
+
+  - name: "stories"
+    label: "Travel Stories"
+    folder: "src/content/stories"
+    create: true
+    fields:
+      - { label: "Story Title", name: "title", widget: "string" }
+      - { label: "Author", name: "author", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Cover Image", name: "image", widget: "image" }
+      - { label: "Full Story", name: "body", widget: "markdown" }
