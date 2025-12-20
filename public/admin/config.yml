@@ -1,6 +1,7 @@
 site_url: https://explorechina.travel
 backend:
-  name: git-gateway
+  name: github
+  repo: ChrisHu2025  # 替换为您的GitHub仓库
   branch: main
 
 media_folder: "public/images"
