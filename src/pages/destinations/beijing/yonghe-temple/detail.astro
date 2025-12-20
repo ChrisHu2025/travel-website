@@ -1,0 +1,89 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { getEntry } from 'astro:content';
+
+// 正确获取四级页面内容
+const { params } = Astro;
+const spotId = `beijing/yonghe-temple/detail`;
+
+try {
+  const entry = await getEntry('destinations', spotId);
+  // 使用entry数据
+} catch (error) {
+  // 处理错误
+}
+
+// 或者直接硬编码测试内容
+const entry = {
+  data: {
+    title: "Yonghe Temple",
+    region: "Beijing",
+    city: "Beijing",
+    season: "Spring, Autumn",
+    image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Yonghe+Temple",
+    body: "Yonghe Temple, also known as the Lama Temple, is one of Beijing's most magnificent and historically significant monasteries. Built in 1694 during the Qing Dynasty as the residence of Emperor Yongzheng before he ascended the throne, it was converted into a temple in 1744 and has since served as both a Buddhist monastery and a college for training monks. This unique complex represents the harmonious blend of Han Chinese and Tibetan Buddhist architectural styles that characterize China's religious heritage."
+  }
+};
+---
+
+<Layout title={entry.data.title + " - Explore China"}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 中上大卡片区域 -->
+    <section class="relative h-[300px] md:h-[400px]">
+      <img 
+        src={entry.data.image || 'https://via.placeholder.com/1200x800/6366f1/ffffff?text='+entry.data.title}
+        alt={entry.data.title} 
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+      <div class="container mx-auto px-4 h-full flex flex-col justify-end pb-8">
+        <div class="max-w-4xl">
+          <div class="flex items-center text-white text-sm mb-2">
+            <span>{entry.data.city} • {entry.data.season || 'Historical Site'}</span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
+            {entry.data.title}
+          </h1>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 正文内容区域 -->
+    <section class="py-12 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto prose prose-lg">
+          <article>
+            <p class="text-xl text-gray-700 mb-8 leading-relaxed">
+              {entry.data.body}
+            </p>
+            
+            <div class="my-12 border-t border-b py-8">
+              <img 
+                src="https://via.placeholder.com/800x400/6366f1/ffffff?text=Temple+Architecture" 
+                alt="Temple Architecture" 
+                class="w-full rounded-xl shadow-md my-8 border border-gray-100"
+              />
+              <p class="text-center text-gray-500 text-sm mt-2">
+                {entry.data.title} showcases traditional Chinese Buddhist architecture
+              </p>
+            </div>
+            
+            <div class="bg-indigo-50 rounded-xl p-8 mt-12 border border-indigo-100">
+              <h3 class="text-xl font-serif font-bold text-indigo-900 mb-6">Visitor Guide: Planning Your Visit</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Best Time to Visit</h4>
+                  <p class="text-gray-600">Spring (April-May) and Autumn (September-October)</p>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Getting There</h4>
+                  <p class="text-gray-600">Take subway line 2 or 5 to Yonghegong Station</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>

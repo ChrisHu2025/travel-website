@@ -1,0 +1,143 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { getEntry } from 'astro:content';
+
+// 直接使用测试内容
+const entry = {
+   {
+    title: "Walking the Great Wall: Beyond the Tourist Trail",
+    city: "Beijing",
+    author: "Alex Chen",
+    date: "2025-03-15",
+    season: "Spring, Autumn",
+    image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Great+Wall+Adventure",
+    body: "The first light of dawn painted the ancient stones of the Mutianyu section in hues of gold and amber. As I stood atop the Great Wall of China, watching the mist slowly lift from the surrounding mountains, I felt a profound connection to the countless souls who had walked this path before me. This wasn't just a hike; it was a journey through 2,000 years of human history, ambition, and endurance. The Wall, often mistakenly believed to be a single continuous structure, is actually a network of fortifications built by different dynasties across centuries. Each section tells its own story - from the steep, wild Jinshanling to the heavily restored Badaling. My choice of Mutianyu was deliberate; it offers the perfect balance between preservation and accessibility, with fewer crowds and breathtaking views that stretch endlessly across the landscape.",
+    excerpt: "A personal journey along the Mutianyu section of the Great Wall, exploring its history, architecture, and the profound sense of connection it provides to China's imperial past.",
+    reading_time: 8,
+    tags: ["History", "Hiking", "Cultural Heritage", "Photography"]
+  }
+};
+---
+
+<Layout title={entry.data.title + " - Explore China"}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 中上大卡片区域 -->
+    <section class="relative h-[300px] md:h-[400px]">
+      <img 
+        src={entry.data.image || 'https://via.placeholder.com/1200x800/6366f1/ffffff?text='+entry.data.title}
+        alt={entry.data.title} 
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+      <div class="container mx-auto px-4 h-full flex flex-col justify-end pb-8">
+        <div class="max-w-4xl">
+          <div class="flex items-center text-white text-sm mb-2">
+            <span>{entry.data.city} • {entry.data.season || 'Historical Journey'}</span>
+            <span class="mx-2">•</span>
+            <span>By {entry.data.author}</span>
+            <span class="mx-2">•</span>
+            <span>{entry.data.reading_time} min read</span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
+            {entry.data.title}
+          </h1>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 正文内容区域 -->
+    <section class="py-12 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto prose prose-lg">
+          <article>
+            <p class="text-xl text-gray-700 mb-8 leading-relaxed">
+              {entry.data.body}
+            </p>
+            
+            <div class="my-12 border-t border-b py-8">
+              <img 
+                src="https://via.placeholder.com/1200x600/6366f1/ffffff?text=Great+Wall+Sunset+View" 
+                alt="Great Wall at sunset" 
+                class="w-full rounded-xl shadow-md my-8 border border-gray-100"
+              />
+              <p class="text-center text-gray-500 text-sm mt-2">
+                The Mutianyu section offers some of the most dramatic views, especially during sunrise and sunset when the stones glow with warm light.
+              </p>
+            </div>
+            
+            <p class="text-gray-700 mb-6 leading-relaxed">
+              Unlike the common perception that the Wall was built as a single project, it evolved over centuries. The earliest sections date back to the 7th century BCE, while the most famous parts were constructed during the Ming Dynasty (1368-1644). Each dynasty added, rebuilt, or extended sections according to their defensive needs and technological capabilities. The Mutianyu section I was exploring was first built in the mid-6th century during the Northern Qi dynasty, then rebuilt in stone and granite during the Ming Dynasty.
+            </p>
+            
+            <p class="text-gray-700 mb-6 leading-relaxed">
+              What struck me most was the engineering brilliance. The Wall follows the natural contours of the mountains, using the terrain as part of its defensive architecture. Watchtowers are strategically positioned at regular intervals, allowing for signaling across vast distances. The materials vary by region - stone and brick in accessible areas, rammed earth in more remote sections. Even today, standing on those ancient stones, one can appreciate the sheer human effort required to build this wonder without modern machinery.
+            </p>
+            
+            <div class="bg-indigo-50 rounded-xl p-8 mt-12 border border-indigo-100">
+              <h3 class="text-xl font-serif font-bold text-indigo-900 mb-6">Planning Your Great Wall Adventure</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Best Sections to Visit</h4>
+                  <ul class="list-disc pl-5 space-y-1 text-gray-600">
+                    <li>For first-timers: Badaling (easily accessible, well-restored)</li>
+                    <li>For photographers: Mutianyu (dramatic views, cable cars)</li>
+                    <li>For hikers: Jinshanling to Simatai (authentic, challenging)</li>
+                    <li>For avoiding crowds: Jiankou (wild, unrestored, advanced only)</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Practical Tips</h4>
+                  <ul class="list-disc pl-5 space-y-1 text-gray-600">
+                    <li>Best time: April-May and September-October (mild weather)</li>
+                    <li>Transportation: Book private cars or join small tours</li>
+                    <li>What to bring: Comfortable hiking shoes, water, sun protection</li>
+                    <li>Entry fees: ¥40-60 depending on the section</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <p class="text-gray-700 mb-6 leading-relaxed mt-8">
+              My hike concluded at sunset, when the Wall transformed into a silhouette against the fiery sky. As I descended, I met a group of elderly Chinese visitors who shared their childhood memories of visiting the Wall during the Cultural Revolution, when it was closed to foreigners. Their stories added another layer to my understanding - this wasn't just a historical monument; it was a living witness to China's dramatic transformations. The Great Wall, in all its magnificence and complexity, represents more than defensive architecture. It embodies the enduring spirit of a civilization that has survived millennia of change, conflict, and renewal. For any traveler seeking to understand China beyond its modern facade, walking the Wall is not just a tourist activity - it's a pilgrimage.
+            </p>
+            
+            <div class="mt-12 pt-8 border-t border-gray-200">
+              <div class="flex flex-wrap items-center gap-4">
+                {entry.data.tags.map((tag, index) => (
+                  <span 
+                    key={index} 
+                    class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 作者信息 -->
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto">
+          <div class="flex items-start space-x-6 pt-8 border-t border-gray-200">
+            <img 
+              src="https://via.placeholder.com/200x200/6366f1/ffffff?text=Author" 
+              alt="Author" 
+              class="w-16 h-16 rounded-full object-cover"
+            />
+            <div>
+              <h4 class="font-serif font-bold text-gray-900">{entry.data.author}</h4>
+              <p class="text-gray-600 mt-1">Travel writer and photographer specialized in Chinese cultural heritage sites.</p>
+              <a href="/about" class="mt-2 inline-block text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+                More stories by {entry.data.author} →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>

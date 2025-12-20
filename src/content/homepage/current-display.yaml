@@ -1,0 +1,9 @@
+left_top_card: "forbidden-city"  # 对应src/content/destinations/forbidden-city
+left_bottom_card: "jiuzhaigou-autumn"  # 对应src/content/in-season/jiuzhaigou-autumn
+middle_top_card: "great-wall"  # 对应src/content/destinations/great-wall
+middle_bottom_card: "sanya-yalong-bay"  # 对应src/content/resorts/sanya-yalong-bay
+right_cards:
+  - card: "forbidden-city-secrets"  # 对应src/content/stories/forbidden-city-secrets
+  - card: "panda-base-adventure"
+  - card: "terracotta-army-discovery"
+  - card: "harbin-ice-festival"

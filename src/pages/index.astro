@@ -2,75 +2,320 @@
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
-const spots = await getCollection('spots');
-const guides = await getCollection('guides');
+// 获取各板块内容
+const featuredDestinations = await getCollection('destinations', ({ data }) => data.featured);
+const featuredInSeason = await getCollection('in-season', ({ data }) => data.featured);
+const featuredResorts = await getCollection('resorts', ({ data }) => data.featured);
+const featuredStories = await getCollection('stories', ({ data }) => data.featured);
+
+// 当前展示页内容
+const leftCards = [
+  featuredDestinations[0] || { image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=Beijing', title: 'Beijing', summary: 'Imperial palaces, ancient temples, and modern wonders' },
+  featuredInSeason[0] || { image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=Jiuzhaigou+Autumn', title: 'Jiuzhaigou Autumn', summary: 'Golden forests reflecting in turquoise lakes' }
+];
+
+const middleTopCard = featuredDestinations[1] || { 
+  image: 'https://via.placeholder.com/600x450/6366f1/ffffff?text=Hero+Destination',
+  title: 'Discover China\'s Hidden Gems',
+  summary: 'Explore the most authentic and breathtaking destinations across China',
+  season: 'All Seasons'
+};
+
+const middleBottomCard = featuredResorts[0] || { 
+  image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=Sanya+Yalong+Bay',
+  title: 'Sanya Yalong Bay',
+  summary: '7-kilometer white sand beach with luxury resorts and crystal-clear waters',
+  category: 'Beach Resort'
+};
+
+const rightCards = [
+  featuredStories[0] || { image: 'https://via.placeholder.com/300x225/6366f1/ffffff?text=Great+Wall', title: 'Great Wall Adventure', summary: 'A personal journey along the Mutianyu section' },
+  featuredStories[1] || { image: 'https://via.placeholder.com/300x225/6366f1/ffffff?text=Chengdu+Food', title: 'Chengdu Food Tour', summary: 'Spicy cuisine and panda encounters' },
+  featuredDestinations[2] || { image: 'https://via.placeholder.com/300x225/6366f1/ffffff?text=Guilin+Landscapes', title: 'Guilin Landscapes', summary: 'Karst mountains and Li River cruises' },
+  featuredInSeason[1] || { image: 'https://via.placeholder.com/300x225/6366f1/ffffff?text=Harbin+Ice+Festival', title: 'Harbin Ice Festival', summary: 'World\'s largest ice and snow sculptures' }
+];
+
+// 下滑页内容
+const destinationsSection = featuredDestinations.slice(0, 3);
+const inSeasonSection = featuredInSeason.slice(0, 3);
+const resortsSection = featuredResorts.slice(0, 3);
+const storiesSection = featuredStories.slice(0, 3);
 ---
 
-<Layout title="首页">
-  <div class="text-center mb-12">
-    <h1 class="text-4xl font-bold text-gray-800 mb-4">探索世界之美</h1>
-    <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-      分享最真实的旅游景点介绍和实用攻略，让每一次旅行都充满惊喜
-    </p>
-  </div>
-
-  <section class="mb-16">
-    <div class="flex justify-between items-center mb-8">
-      <h2 class="text-2xl font-bold text-gray-800">热门景点</h2>
-      <a href="/spots/" class="text-blue-600 hover:text-blue-800 font-medium">
-        查看更多 →
-      </a>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {spots.slice(0, 3).map((spot) => (
-        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-          <img 
-            src={spot.data.image} 
-            alt={spot.data.title} 
-            class="w-full h-48 object-cover"
-            loading="lazy"
-          />
-          <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-2">{spot.data.title}</h3>
-            <p class="text-gray-600 mb-4">{spot.data.city} • {spot.data.season}</p>
-            <p class="text-gray-700 mb-4">{spot.data.description}</p>
-            <a href={`/spots/${spot.slug}/`} class="text-blue-600 hover:text-blue-800 font-medium">
-              了解更多 →
-            </a>
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  <section>
-    <div class="flex justify-between items-center mb-8">
-      <h2 class="text-2xl font-bold text-gray-800">最新攻略</h2>
-      <a href="/guides/" class="text-blue-600 hover:text-blue-800 font-medium">
-        查看更多 →
-      </a>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {guides.slice(0, 3).map((guide) => (
-        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-          <img 
-            src={guide.data.image} 
-            alt={guide.data.title} 
-            class="w-full h-48 object-cover"
-            loading="lazy"
-          />
-          <div class="p-6">
-            <div class="text-gray-500 text-sm mb-2">
-              {new Date(guide.data.date).toLocaleDateString()}
+<Layout title="Explore China - Authentic Travel Experiences">
+  <div class="min-h-screen bg-gray-50">
+    <!-- 当前展示页 - 三栏布局 (25%-50%-25% 等高设计) -->
+    <section class="py-6 container mx-auto px-4">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_1fr] gap-5 min-h-[400px]">
+        <!-- 左侧25%区域 - 2个上下排列的相同尺寸卡片 (4:3比例) -->
+        <div class="flex flex-col space-y-5">
+          {leftCards.map((card, index) => (
+            <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-1 overflow-hidden">
+              <div class="aspect-[4/3] overflow-hidden">
+                <img 
+                  src={card.data?.image || card.image} 
+                  alt={card.data?.title || card.title} 
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div class="p-4 bg-white">
+                <h3 class="text-lg font-serif font-bold text-gray-900">{card.data?.title || card.title}</h3>
+                <p class="text-gray-600 text-sm mt-1">{card.data?.summary?.slice(0, 60) || 'Explore this fascinating destination'}</p>
+              </div>
             </div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">{guide.data.title}</h3>
-            <p class="text-gray-700 mb-4">{guide.data.description}</p>
-            <a href={`/guides/${guide.slug}/`} class="text-blue-600 hover:text-blue-800 font-medium">
-              阅读攻略 →
+          ))}
+        </div>
+        
+        <!-- 中间50%区域 - 2个卡片，高度2:1 (4:3比例) -->
+        <div class="flex flex-col space-y-5">
+          <!-- 中上大卡片 (2/3高度) -->
+          <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-2 overflow-hidden">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img 
+                src={middleTopCard.data?.image || middleTopCard.image} 
+                alt={middleTopCard.data?.title || middleTopCard.title} 
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div class="p-5 bg-white">
+              <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium mb-2">
+                {middleTopCard.data?.season || middleTopCard.season || 'Featured'}
+              </span>
+              <h2 class="text-xl md:text-2xl font-serif font-bold mb-2 leading-tight">
+                {middleTopCard.data?.title || middleTopCard.title}
+              </h2>
+              <p class="text-gray-700 text-sm mb-3 line-clamp-2">
+                {middleTopCard.data?.summary || middleTopCard.summary || 'Discover the most authentic and breathtaking destinations across China'}
+              </p>
+              <a href="/destinations/" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-xs group/btn">
+                View Details
+                <svg class="ml-1 w-3 h-3 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </div>
+          
+          <!-- 中下小卡片 (1/3高度) - 标题和简介在图片左侧 -->
+          <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-1 flex">
+            <div class="w-1/2 aspect-[4/3] overflow-hidden">
+              <img 
+                src={middleBottomCard.data?.image || middleBottomCard.image} 
+                alt={middleBottomCard.data?.title || middleBottomCard.title} 
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div class="w-1/2 p-4 bg-white flex flex-col justify-center">
+              <span class="inline-block px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium mb-1">
+                {middleBottomCard.data?.category || middleBottomCard.category || 'Resort'}
+              </span>
+              <h3 class="text-base font-serif font-bold text-gray-900">{middleBottomCard.data?.title || middleBottomCard.title}</h3>
+              <p class="text-gray-600 text-xs mt-1 line-clamp-3">
+                {middleBottomCard.data?.summary || middleBottomCard.summary || 'Luxury resorts and exclusive retreats'}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 右侧25%区域 - 4个上下排列的相同尺寸卡片 (4:3比例) -->
+        <div class="flex flex-col space-y-3">
+          {rightCards.map((card, index) => (
+            <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-1 overflow-hidden">
+              <div class="aspect-[4/3] overflow-hidden">
+                <img 
+                  src={card.data?.image || card.image} 
+                  alt={card.data?.title || card.title} 
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div class="p-3 bg-white">
+                <h3 class="text-base font-serif font-bold text-gray-900 line-clamp-1">{card.data?.title || card.title}</h3>
+                <p class="text-gray-600 text-xs mt-1 line-clamp-2">
+                  {card.data?.summary?.slice(0, 40) || card.summary?.slice(0, 40) || 'Quick travel story'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- 分隔线 (保持不变) -->
+    <div class="border-t border-gray-200 my-12"></div>
+
+    <!-- 下滑页 - 4个板块 (保持不变) -->
+    <section class="py-16 bg-white">
+      <div class="container mx-auto px-4">
+        <!-- Destinations板块 -->
+        <div class="mb-16">
+          <div class="flex flex-col items-center mb-10">
+            <div class="border-t border-gray-300 w-24 mb-2"></div>
+            <h2 class="text-3xl font-serif font-bold text-gray-900">Destinations</h2>
+            <div class="border-t border-gray-300 w-24 mt-2"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {destinationsSection.map((destination, index) => (
+              <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
+                <div class="h-64 overflow-hidden">
+                  <img 
+                    src={destination.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+destination.data.title} 
+                    alt={destination.data.title} 
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div class="p-5">
+                  <span class="inline-block px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm mb-3">
+                    {destination.data.season || 'All Seasons'}
+                  </span>
+                  <h3 class="text-xl font-serif font-bold text-gray-900 mb-2">{destination.data.title}</h3>
+                  <p class="text-gray-600 mb-4 line-clamp-2">{destination.data.summary}</p>
+                  <a href={`/destinations/${destination.slug.split('/')[0]}/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                    Discover
+                    <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="flex justify-end mt-6">
+            <a href="/destinations/" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
+              More
+              <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
             </a>
           </div>
         </div>
-      ))}
-    </div>
-  </section>
+        
+        <!-- In Season板块 -->
+        <div class="mb-16">
+          <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-serif font-bold text-gray-900">In Season</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {inSeasonSection.map((season, index) => (
+              <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
+                <div class="h-64 overflow-hidden">
+                  <img 
+                    src={season.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+season.data.title} 
+                    alt={season.data.title} 
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div class="p-5">
+                  <span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm mb-3">
+                    {season.data.season || 'Current Season'}
+                  </span>
+                  <h3 class="text-xl font-serif font-bold text-gray-900 mb-2">{season.data.title}</h3>
+                  <p class="text-gray-600 mb-4 line-clamp-2">{season.data.summary}</p>
+                  <a href={`/in-season/${season.slug.split('/')[0]}/detail/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                    Explore
+                    <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="flex justify-end mt-6">
+            <a href="/in-season/" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
+              More
+              <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Resorts & Getaways板块 -->
+        <div class="mb-16">
+          <div class="flex flex-col items-center mb-10">
+            <div class="border-t border-gray-300 w-24 mb-2"></div>
+            <h2 class="text-3xl font-serif font-bold text-gray-900">Resorts & Getaways</h2>
+            <div class="border-t border-gray-300 w-24 mt-2"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {resortsSection.map((resort, index) => (
+              <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
+                <div class="h-64 overflow-hidden">
+                  <img 
+                    src={resort.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+resort.data.title} 
+                    alt={resort.data.title} 
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div class="p-5">
+                  <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm mb-3">
+                    {resort.data.category || 'Luxury Stay'}
+                  </span>
+                  <h3 class="text-xl font-serif font-bold text-gray-900 mb-2">{resort.data.title}</h3>
+                  <p class="text-gray-600 mb-4 line-clamp-2">{resort.data.summary}</p>
+                  <a href={`/resorts/${resort.slug.split('/')[0]}/detail/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                    Discover
+                    <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="flex justify-end mt-6">
+            <a href="/resorts/" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
+              More
+              <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Travel Stories板块 -->
+        <div>
+          <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-serif font-bold text-gray-900">Travel Stories</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {storiesSection.map((story, index) => (
+              <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
+                <div class="h-64 overflow-hidden">
+                  <img 
+                    src={story.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+story.data.title} 
+                    alt={story.data.title} 
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div class="p-5">
+                  <div class="flex items-center text-sm text-gray-500 mb-3">
+                    <span>{new Date(story.data.date || new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span class="mx-2">•</span>
+                    <span>{story.data.author || 'Explore China Team'}</span>
+                  </div>
+                  <h3 class="text-xl font-serif font-bold text-gray-900 mb-2">{story.data.title}</h3>
+                  <p class="text-gray-600 mb-4 line-clamp-2">{story.data.excerpt}</p>
+                  <a href={`/stories/${story.slug.split('/')[0]}/detail/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                    Read Story
+                    <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="flex justify-end mt-6">
+            <a href="/stories/" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
+              More
+              <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </Layout>

@@ -1,0 +1,140 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// 获取北京故事
+const allBeijingStories = await getCollection('stories', ({ id }) => {
+  return id.startsWith('beijing/');
+});
+
+const beijingStories = allBeijingStories;
+
+// 筛选特色故事
+const featuredStory = beijingStories.find(story => story.data.featured) || beijingStories[0];
+const rightStories = beijingStories.filter(story => 
+  story !== featuredStory
+).slice(0, 2);
+
+const gridStories = beijingStories.filter(story => 
+  story !== featuredStory && !rightStories.includes(story)
+);
+
+// 辅助函数：获取稳定的详情页URL
+const getDetailUrl = (story) => {
+  // 从slug中提取故事名称 (例如: 'beijing/great-wall' -> 'great-wall')
+  const storyPath = story.slug.split('/')[1] || story.slug.split('/').pop();
+  // 构造完整详情页URL
+  return `/stories/beijing/${storyPath}/detail/`;
+};
+---
+
+<Layout title="Beijing Stories - Explore China">
+  <div class="min-h-screen bg-gray-50">
+    <!-- 当前页大布局 -->
+    <section class="py-12 container mx-auto px-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 左侧大卡片 (2/3区域) -->
+        <div class="lg:col-span-2">
+          {featuredStory && (
+            <div class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 h-[500px]">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
+              <img 
+                src={featuredStory.data.image || 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Featured+Story'}
+                alt={featuredStory.data.title} 
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div class="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
+                <span class="inline-block px-4 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
+                  {featuredStory.data.season || 'Featured'}
+                </span>
+                <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
+                  {featuredStory.data.title}
+                </h2>
+                <p class="text-lg opacity-90 mb-6 max-w-2xl">
+                  {featuredStory.data.excerpt || 'A captivating travel story that takes you through the hidden corners of Beijing'}
+                </p>
+                <a href={getDetailUrl(featuredStory)} class="inline-flex items-center text-white font-medium text-lg group/btn">
+                  Read Full Story
+                  <svg class="ml-2 w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <!-- 右侧中卡片 (1/3区域) -->
+        <div class="space-y-8">
+          {rightStories.map((story, index) => (
+            <div class="group relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow h-64" key={index}>
+              <img 
+                src={story.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+encodeURIComponent(story.data.title)}
+                alt={story.data.title} 
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
+                <h3 class="text-xl font-serif font-bold">{story.data.title}</h3>
+                <p class="text-gray-200 mt-2 text-sm">
+                  By {story.data.author || 'Explore China Team'} • {new Date(story.data.date || new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </p>
+                <a href={getDetailUrl(story)} class="mt-3 inline-block text-indigo-300 hover:text-white transition-colors font-medium text-sm">
+                  Read Story →
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- 下滑页小卡片区域 -->
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-12">
+          <h2 class="text-3xl font-serif font-bold text-gray-900">
+            More Beijing Travel Stories
+          </h2>
+          <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
+            View All Stories
+            <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {gridStories.map((story, index) => (
+            <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group" key={index}>
+              <div class="h-48 overflow-hidden">
+                <img 
+                  src={story.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+encodeURIComponent(story.data.title)}
+                  alt={story.data.title} 
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div class="p-5">
+                <div class="flex items-center text-sm text-gray-500 mb-3">
+                  <span>{story.data.season || 'All Seasons'}</span>
+                  <span class="mx-2">•</span>
+                  <span>{story.data.author || 'Author'}</span>
+                </div>
+                <h3 class="text-lg font-serif font-bold text-gray-900 mb-2">{story.data.title}</h3>
+                <p class="text-gray-600 mb-4 line-clamp-2">
+                  {story.data.excerpt || 'A fascinating journey through Beijing\'s cultural heritage and modern life'}
+                </p>
+                <a href={getDetailUrl(story)} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                  Continue Reading
+                  <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>

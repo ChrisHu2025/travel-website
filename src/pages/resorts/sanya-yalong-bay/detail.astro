@@ -1,0 +1,157 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { getEntry } from 'astro:content';
+
+// 直接使用测试内容
+const entry = {
+   {
+    title: "Sanya Yalong Bay: China's Premier Beach Paradise",
+    region: "Hainan",
+    season: "Winter (November-April)",
+    bestTime: "December to March for ideal weather",
+    image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Sanya+Yalong+Bay",
+    body: "Nestled on the southern tip of Hainan Island, Yalong Bay (Crescent Bay) is widely regarded as China's most beautiful beach destination. The 7-kilometer crescent-shaped bay is flanked by lush tropical forests and dotted with five-star resorts that have transformed this former fishing village into the 'Hawaii of the East.' What sets Yalong Bay apart is its exceptional clarity of waters - the bay is protected by a coral reef that creates calm, turquoise waters perfect for swimming and water sports. Unlike other Chinese beach destinations, Yalong Bay maintains pristine white sand beaches with minimal crowding, especially during weekdays. The resort zone is carefully planned with strict height restrictions to preserve the natural landscape, resulting in a harmonious blend of luxury and nature that few destinations can match.",
+    amenities: [
+      "Private white sand beaches with crystal-clear waters",
+      "World-class water sports including sailing, diving, and jet skiing",
+      "Luxury spa facilities with ocean-view treatment rooms",
+      "Multiple championship golf courses designed by renowned architects",
+      "Fine dining restaurants featuring fresh seafood and international cuisine"
+    ],
+    travelTips: [
+      "Book accommodations 3-4 months in advance for winter season (peak demand)",
+      "Most resorts offer airport transfers from Phoenix International Airport (25-minute drive)",
+      "Beach access is restricted to resort guests - day passes rarely available",
+      "The rainy season (May-October) offers significant discounts but occasional typhoons"
+    ]
+  }
+};
+---
+
+<Layout title={entry.data.title + " - Explore China"}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 中上大卡片区域 -->
+    <section class="relative h-[300px] md:h-[400px]">
+      <img 
+        src={entry.data.image || 'https://via.placeholder.com/1200x800/6366f1/ffffff?text='+entry.data.title}
+        alt={entry.data.title} 
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+      <div class="container mx-auto px-4 h-full flex flex-col justify-end pb-8">
+        <div class="max-w-4xl">
+          <div class="flex items-center text-white text-sm mb-2">
+            <span>{entry.data.region} • {entry.data.season}</span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
+            {entry.data.title}
+          </h1>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 正文内容区域 -->
+    <section class="py-12 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto prose prose-lg">
+          <article>
+            <p class="text-xl text-gray-700 mb-8 leading-relaxed">
+              {entry.data.body}
+            </p>
+            
+            <div class="my-12 border-t border-b py-8">
+              <img 
+                src="https://via.placeholder.com/1200x600/6366f1/ffffff?text=Yalong+Bay+Resort+View" 
+                alt="Yalong Bay Resort View" 
+                class="w-full rounded-xl shadow-md my-8 border border-gray-100"
+              />
+              <p class="text-center text-gray-500 text-sm mt-2">
+                Yalong Bay's pristine white sand beach stretches for 7 kilometers, offering uninterrupted views of the South China Sea.
+              </p>
+            </div>
+            
+            <p class="text-gray-700 mb-6 leading-relaxed">
+              The resort development in Yalong Bay follows a unique "forest in front, sea at back" concept, where luxury properties are nestled between tropical rainforests and the ocean, creating an immersive natural experience. The most prestigious resorts, including the Ritz-Carlton, St. Regis, and Marriott, each occupy their own secluded section of the bay, offering exclusive beach access and private amenities. What truly distinguishes Yalong Bay from other Chinese beach destinations is the strict environmental protection measures in place. Building heights are limited to preserve the natural silhouette of the coastline, and a significant portion of the area is designated as protected forest and marine reserve.
+            </p>
+            
+            <h2 class="text-2xl font-serif font-bold text-gray-900 mt-8 mb-4">Luxury Resort Amenities</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+              {entry.data.amenities.map((amenity, index) => (
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200" key={index}>
+                  <h3 class="font-bold text-gray-900">{amenity}</h3>
+                </div>
+              ))}
+            </div>
+            
+            <div class="bg-indigo-50 rounded-xl p-8 mt-12 border border-indigo-100">
+              <h3 class="text-xl font-serif font-bold text-indigo-900 mb-6">Planning Your Stay</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Booking Guide</h4>
+                  <div class="space-y-2 text-gray-600">
+                    <p><strong>Peak season rates:</strong> ¥2,500-8,000 per night (Nov-Apr)</p>
+                    <p><strong>Shoulder season:</strong> ¥1,200-3,500 per night (May-Oct)</p>
+                    <p><strong>Minimum stay:</strong> 2 nights on weekends, 3 nights during holidays</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Getting There</h4>
+                  <div class="space-y-2 text-gray-600">
+                    <p>Fly to Sanya Phoenix International Airport (SYX)</p>
+                    <p>Resort airport transfers: ¥300-500 one-way</p>
+                    <p>Taxi from airport: ¥150-200, 25-minute drive</p>
+                  </div>
+                </div>
+              </div>
+              
+              <h4 class="font-bold text-gray-800 mt-6 mb-2">Travel Tips</h4>
+              <ul class="list-disc pl-5 space-y-1 text-gray-600">
+                {entry.data.travelTips.map((tip, index) => (
+                  <li key={index}>{tip}</li>
+                ))}
+              </ul>
+            </div>
+            
+            <p class="text-gray-700 mb-6 leading-relaxed mt-8">
+              Beyond the luxurious resorts, Yalong Bay offers numerous experiences that showcase Hainan's unique culture and natural beauty. The nearby Tropical Paradise Forest Park provides hiking trails through pristine rainforest with panoramic views of the bay. For those interested in local culture, the Li and Miao ethnic minority villages offer authentic cultural performances and handicraft demonstrations. The bay area also hosts several exclusive events throughout the year, including the Yalong Bay International Golf Tournament and the Hainan Island International Film Festival. Whether you're seeking relaxation on pristine beaches, world-class golf, or cultural immersion, Yalong Bay represents the pinnacle of luxury travel experiences in China. Its careful balance of development and preservation ensures that this tropical paradise will remain a premier destination for discerning travelers for generations to come.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 相关推荐 -->
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-serif font-bold text-center mb-12">More Luxury Resorts</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map((item, index) => (
+            <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group" key={index}>
+              <div class="h-48 overflow-hidden">
+                <img 
+                  src={`https://via.placeholder.com/800x600/6366f1/ffffff?text=Luxury+Resort+${index+1}`} 
+                  alt="Related content" 
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div class="p-6">
+                <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm mb-3">
+                  <span>{index === 0 ? 'Beach' : index === 1 ? 'Mountain' : 'Cultural'}</span>
+                </span>
+                <h3 class="text-lg font-serif font-bold text-gray-900 mb-2">{index === 0 ? 'Banyan Tree Lijiang' : index === 1 ? 'Mogan Mountain Retreats' : 'Alila Yangshuo'}</h3>
+                <p class="text-gray-600 mb-4">{index === 0 ? 'Villa resort with private pools overlooking mountains' : index === 1 ? 'Bamboo forest retreats with heritage architecture' : 'Cliff-side resort carved into limestone karst'}</p>
+                <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
+                  Discover more
+                  <svg class="ml-2 w-4 h-4 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
