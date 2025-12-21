@@ -4,36 +4,50 @@ import { getCollection, getEntry } from 'astro:content';
 
 // 必需：为动态路由生成所有可能的路径
 export async function getStaticPaths() {
-  // 获取所有集合
-  const destinations = await getCollection('destinations');
-  const stories = await getCollection('stories');
-  const inSeason = await getCollection('in-season');  // 使用正确的集合名称
-  const resorts = await getCollection('resorts');
-  
-  // 生成所有路径
-  const paths = [
+  try {
+    // 获取所有集合
+    const destinations = await getCollection('destinations');
+    const stories = await getCollection('stories');
+    const inSeason = await getCollection('in-season');
+    const resorts = await getCollection('resorts');
+    
+    // 生成所有路径
+    const paths = [];
+    
     // destinations 集合
-    ...destinations.map(entry => ({
-      params: { category: 'destinations', slug: entry.slug }
-    })),
+    destinations.forEach(entry => {
+      paths.push({
+        params: { category: 'destinations', slug: entry.id }
+      });
+    });
     
     // stories 集合
-    ...stories.map(entry => ({
-      params: { category: 'stories', slug: entry.slug }
-    })),
+    stories.forEach(entry => {
+      paths.push({
+        params: { category: 'stories', slug: entry.id }
+      });
+    });
     
     // in-season 集合
-    ...inSeason.map(entry => ({
-      params: { category: 'in-season', slug: entry.slug }
-    })),
+    inSeason.forEach(entry => {
+      paths.push({
+        params: { category: 'in-season', slug: entry.id }
+      });
+    });
     
     // resorts 集合
-    ...resorts.map(entry => ({
-      params: { category: 'resorts', slug: entry.slug }
-    }))
-  ];
-  
-  return paths;
+    resorts.forEach(entry => {
+      paths.push({
+        params: { category: 'resorts', slug: entry.id }
+      });
+    });
+    
+    return paths;
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    // 返回空数组而不是抛出错误，允许构建继续
+    return [];
+  }
 }
 
 // 获取当前页面参数
@@ -58,11 +72,14 @@ if (collectionName) {
 
 // 404处理
 if (!entry) {
-  Astro.redirect('/404');
+  return Astro.redirect('/404');
 }
+
+// 页面标题
+const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Content Not Found - Explore China';
 ---
 
-<Layout title={`${entry.data.title} - Explore China`}>
+<Layout title={pageTitle}>
   <div class="min-h-screen bg-gray-50">
     <!-- 三级页面大图区域 -->
     <section class="relative h-[60vh] md:h-[70vh]">
@@ -135,10 +152,10 @@ if (!entry) {
               const [title, ...content] = section.split('\n');
               return (
                 <div class="mb-12" key={index}>
-                  <h2 class="text-2xl font-serif font-bold text-gray-900 mb-6">{title}</h2>
+                  <h2 class="text-2xl font-serif font-bold text-gray-900 mb-6">{title || 'Section Title'}</h2>
                   <div 
                     class="prose prose-lg max-w-none text-gray-700"
-                    set:html={content.join('\n').replace(/!\[.*?\]\((.*?)\)/g, '<img src="$1" alt="Travel image" class="w-full rounded-xl shadow-md my-8">')}
+                    set:html={content.join('\n').replace(/!\[.*?\]\((.*?)\)/g, '<img src="$1" alt="Travel image" class="w-full rounded-xl shadow-md my-8">') || '<p>Content not available.</p>'}
                   />
                 </div>
               );

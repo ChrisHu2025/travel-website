@@ -3,10 +3,10 @@ import tailwind from '@astrojs/tailwind';
 import { resolve } from 'path';
 
 export default defineConfig({
-  site: 'https://explorechina.travel',  // 修正：移除多余空格
+  site: 'https://explorechina.travel',  // 移除多余空格
   integrations: [tailwind()],
   experimental: {
-    contentLayer: true
+    contentLayer: true  // 启用Content Layer API
   },
   vite: {
     resolve: {
