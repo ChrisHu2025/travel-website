@@ -1,10 +1,10 @@
 ---
-title: "Yonghe Temple"
-region: "Beijing"
-city: "Beijing"
-season: "Spring, Autumn"
+title: 'Yonghe Temple'
+region: 'Beijing'
+city: 'Beijing'
+season: 'Spring, Autumn'
 summary: "One of Beijing's most magnificent Buddhist monasteries"
-image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Yonghe+Temple"
+image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Yonghe+Temple'
 featured: true
 ---
 
