@@ -1,8 +1,7 @@
-import { defineCollection, reference } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 
-// 定义集合Schema
+// 简化的集合Schema
 const destinationsSchema = z.object({
   title: z.string(),
   region: z.string(),
@@ -23,7 +22,7 @@ const storiesSchema = z.object({
   featured: z.boolean().optional()
 });
 
-// 使用正确的内容层API
+// 简化的集合定义 (不使用loader)
 const destinations = defineCollection({
   type: 'content',
   schema: destinationsSchema
