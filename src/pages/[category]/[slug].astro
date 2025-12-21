@@ -1,16 +1,68 @@
 ---
 import Layout from '@layouts/Layout.astro';
-import { getEntry } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 
+// 必需：为动态路由生成所有可能的路径
+export async function getStaticPaths() {
+  // 获取所有集合
+  const destinations = await getCollection('destinations');
+  const stories = await getCollection('stories');
+  const inSeason = await getCollection('in-season');  // 使用正确的集合名称
+  const resorts = await getCollection('resorts');
+  
+  // 生成所有路径
+  const paths = [
+    // destinations 集合
+    ...destinations.map(entry => ({
+      params: { category: 'destinations', slug: entry.slug }
+    })),
+    
+    // stories 集合
+    ...stories.map(entry => ({
+      params: { category: 'stories', slug: entry.slug }
+    })),
+    
+    // in-season 集合
+    ...inSeason.map(entry => ({
+      params: { category: 'in-season', slug: entry.slug }
+    })),
+    
+    // resorts 集合
+    ...resorts.map(entry => ({
+      params: { category: 'resorts', slug: entry.slug }
+    }))
+  ];
+  
+  return paths;
+}
+
+// 获取当前页面参数
 const { category, slug } = Astro.params;
-const entry = await getEntry(category, slug);
 
+// 根据分类获取对应集合
+const collectionName = 
+  category === 'in-season' ? 'in-season' :
+  category === 'destinations' ? 'destinations' :
+  category === 'stories' ? 'stories' :
+  category === 'resorts' ? 'resorts' : null;
+
+// 获取内容
+let entry = null;
+if (collectionName) {
+  try {
+    entry = await getEntry(collectionName, slug);
+  } catch (error) {
+    console.error(`Error loading ${category}/${slug}:`, error);
+  }
+}
+
+// 404处理
 if (!entry) {
   Astro.redirect('/404');
 }
 ---
 
-<Layout title={entry.data.title + " - Explore China"}>
+<Layout title={`${entry.data.title} - Explore China`}>
   <div class="min-h-screen bg-gray-50">
     <!-- 三级页面大图区域 -->
     <section class="relative h-[60vh] md:h-[70vh]">
@@ -25,11 +77,11 @@ if (!entry) {
       <div class="container mx-auto px-4 h-full flex flex-col justify-end">
         <div class="max-w-4xl pb-12 md:pb-20">
           <div class="flex flex-wrap items-center text-white text-sm mb-4">
-            <span class="mr-2">{new Date(entry.data.date || new Date()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span class="mr-2">{entry.data.date ? new Date(entry.data.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             <span class="mx-2">•</span>
             <span>{entry.data.author || 'Explore China Team'}</span>
             <span class="mx-2">•</span>
-            <span>{Math.round(entry.data.body.split(' ').length / 250)} min read</span>
+            <span>{Math.round((entry.data.body || '').split(' ').length / 250)} min read</span>
           </div>
           <h1 class="text-3xl md:text-5xl font-serif font-bold text-white max-w-3xl leading-tight">
             {entry.data.title}
@@ -38,7 +90,7 @@ if (!entry) {
             <p class="text-xl text-gray-200 mt-4 max-w-3xl">{entry.data.subtitle}</p>
           )}
           <div class="mt-6 flex flex-wrap gap-2">
-            {entry.data.tags?.map((tag, index) => (
+            {(entry.data.tags || []).map((tag, index) => (
               <span 
                 key={index} 
                 class="px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm"
@@ -61,7 +113,7 @@ if (!entry) {
               <h2 class="text-2xl font-serif font-bold text-gray-900 mb-3">
                 {entry.data.introduction_title || 'Journey Overview'}
               </h2>
-              <p class="text-gray-700 text-lg">{entry.data.introduction}</p>
+              <p class="text-gray-700 text-lg">{entry.data.introduction || 'Discover the authentic travel experiences and cultural insights of this remarkable destination.'}</p>
             </div>
             <div class="mt-6 md:mt-0 flex space-x-4">
               <button class="text-gray-600 hover:text-indigo-600 transition-colors">
@@ -79,7 +131,7 @@ if (!entry) {
 
           <!-- 主要内容 -->
           <div class="space-y-12">
-            {entry.data.body.split('### ').slice(1).map((section, index) => {
+            {entry.data.body ? entry.data.body.split('### ').slice(1).map((section, index) => {
               const [title, ...content] = section.split('\n');
               return (
                 <div class="mb-12" key={index}>
@@ -90,7 +142,11 @@ if (!entry) {
                   />
                 </div>
               );
-            })}
+            }) : (
+              <div class="text-gray-700">
+                <p>{entry.data.body || 'Content is temporarily unavailable. Please check back later.'}</p>
+              </div>
+            )}
           </div>
 
           <!-- 实用信息卡片 -->

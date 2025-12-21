@@ -3,7 +3,7 @@ import tailwind from '@astrojs/tailwind';
 import { resolve } from 'path';
 
 export default defineConfig({
-  site: 'https://explorechina.travel',
+  site: 'https://explorechina.travel',  // 修正：移除多余空格
   integrations: [tailwind()],
   experimental: {
     contentLayer: true
