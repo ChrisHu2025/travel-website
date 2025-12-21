@@ -55,35 +55,7 @@
         // 注册预览样式
         CMS.registerPreviewStyle('/css/cms-preview.css');
         
-        // 景点预览模板
-        CMS.registerPreviewTemplate('spots', function(entry) {
-          const data = entry.get('data').toJS();
-          return `
-            <div class="max-w-4xl mx-auto p-8">
-              <h1 class="text-3xl font-bold mb-4">${data.title}</h1>
-              <p class="text-gray-600 mb-4">${data.city} - 最佳季节: ${data.season}</p>
-              <p class="text-lg text-gray-700 mb-6">${data.description}</p>
-              <div class="prose max-w-none">
-                ${data.body}
-              </div>
-            </div>
-          `;
-        });
         
-        // 攻略预览模板
-        CMS.registerPreviewTemplate('guides', function(entry) {
-          const data = entry.get('data').toJS();
-          return `
-            <div class="max-w-4xl mx-auto p-8">
-              <h1 class="text-3xl font-bold mb-4">${data.title}</h1>
-              <p class="text-gray-600 mb-4">发布日期: ${new Date(data.date).toLocaleDateString()}</p>
-              <p class="text-lg text-gray-700 mb-6">${data.description}</p>
-              <div class="prose max-w-none">
-                ${data.body}
-              </div>
-            </div>
-          `;
-        });
         
         console.log('CMS初始化成功');
         

@@ -2,42 +2,68 @@
 import Layout from '@layouts/Layout.astro';
 import { getEntry } from 'astro:content';
 
-// 获取四级页面内容
-let entry;
+// 稳定获取内容的方法
+const entryId = 'sanya-yalong-bay';
+let entry = null;
+
 try {
-  entry = await getEntry('resorts', 'sanya-yalong-bay');
+  // 尝试获取内容
+  entry = await getEntry('resorts', entryId);
 } catch (error) {
-  // 使用测试内容
+  console.error(`Failed to load content for ${entryId}:`, error);
+  // 提供正确格式的测试内容
   entry = {
+    id: 'sanya-yalong-bay',
+    slug: 'sanya-yalong-bay',
     data: {
-      title: "Sanya Yalong Bay: China's Premier Beach Paradise",
-      region: "Hainan",
+      title: "Sanya Yalong Bay",
+      category: "Beach Resort",
+      location: "Hainan",
       season: "Winter (November-April)",
-      bestTime: "December to March for ideal weather",
+      summary: "7-kilometer white sand beach with luxury resorts and crystal-clear waters",
       image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Sanya+Yalong+Bay",
-      body: "Nestled on the southern tip of Hainan Island, Yalong Bay (Crescent Bay) is widely regarded as China's most beautiful beach destination. The 7-kilometer crescent-shaped bay is flanked by lush tropical forests and dotted with five-star resorts that have transformed this former fishing village into the 'Hawaii of the East.' What sets Yalong Bay apart is its exceptional clarity of waters - the bay is protected by a coral reef that creates calm, turquoise waters perfect for swimming and water sports. Unlike other Chinese beach destinations, Yalong Bay maintains pristine white sand beaches with minimal crowding, especially during weekdays. The resort zone is carefully planned with strict height restrictions to preserve the natural landscape, resulting in a harmonious blend of luxury and nature that few destinations can match."
+      featured: true,
+      body: "Nestled on the southern tip of Hainan Island, Yalong Bay (Crescent Bay) is widely regarded as China's most beautiful beach destination. The 7-kilometer crescent-shaped bay is flanked by lush tropical forests and dotted with five-star resorts that have transformed this former fishing village into the 'Hawaii of the East.' What sets Yalong Bay apart is its exceptional clarity of waters - the bay is protected by a coral reef that creates calm, turquoise waters perfect for swimming and water sports."
+    }
+  };
+}
+
+// 确保entry数据有效
+if (!entry) {
+  entry = {
+    id: 'sanya-yalong-bay',
+    slug: 'sanya-yalong-bay',
+    data: {
+      title: "Sanya Yalong Bay",
+      category: "Beach Resort",
+      location: "Hainan",
+      season: "Winter (November-April)",
+      summary: "Content temporarily unavailable. Please check back later.",
+      image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Sanya+Yalong+Bay",
+      featured: true,
+      body: "Content temporarily unavailable. Please check back later."
     }
   };
 }
 ---
 
-<Layout title={entry.data.title + " - Explore China"}>
+<Layout title={`${entry.data.title} - Explore China`}>
   <div class="min-h-screen bg-gray-50">
     <!-- 中上大卡片区域 -->
     <section class="relative h-[300px] md:h-[400px]">
       <img 
-        src={entry.data.image || 'https://via.placeholder.com/1200x800/6366f1/ffffff?text='+entry.data.title}
-        alt={entry.data.title} 
+        src={entry.data.image || 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Sanya+Yalong+Bay'}
+        alt={entry.data.title || 'Sanya Yalong Bay'} 
         class="w-full h-full object-cover"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
       <div class="container mx-auto px-4 h-full flex flex-col justify-end pb-8">
         <div class="max-w-4xl">
           <div class="flex items-center text-white text-sm mb-2">
-            <span>{entry.data.region} • {entry.data.season}</span>
+            <span>{entry.data.location || 'Hainan'} • {entry.data.season || 'Beach Resort'}</span>
           </div>
           <h1 class="text-3xl md:text-4xl font-serif font-bold text-white leading-tight">
-            {entry.data.title}
+            {entry.data.title || 'Sanya Yalong Bay'}
           </h1>
         </div>
       </div>
@@ -49,12 +75,12 @@ try {
         <div class="max-w-4xl mx-auto prose prose-lg">
           <article>
             <p class="text-xl text-gray-700 mb-8 leading-relaxed">
-              {entry.data.body}
+              {entry.data.body || 'Sanya Yalong Bay is China\'s premier beach destination. The 7-kilometer crescent-shaped bay is flanked by lush tropical forests and dotted with five-star resorts that have transformed this former fishing village into the "Hawaii of the East."'}
             </p>
             
             <div class="my-12 border-t border-b py-8">
               <img 
-                src="https://via.placeholder.com/1200x600/6366f1/ffffff?text=Yalong+Bay+Resort+View" 
+                src="https://via.placeholder.com/800x400/6366f1/ffffff?text=Yalong+Bay+Resort+View" 
                 alt="Yalong Bay Resort View" 
                 class="w-full rounded-xl shadow-md my-8 border border-gray-100"
               />
@@ -63,7 +89,19 @@ try {
               </p>
             </div>
             
-            <!-- 其余内容保持不变 -->
+            <div class="bg-indigo-50 rounded-xl p-8 mt-12 border border-indigo-100">
+              <h3 class="text-xl font-serif font-bold text-indigo-900 mb-6">Planning Your Stay</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Best Time to Visit</h4>
+                  <p class="text-gray-600">December to March for ideal weather</p>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-800 mb-2">Getting There</h4>
+                  <p class="text-gray-600">Fly to Sanya Phoenix International Airport (SYX)</p>
+                </div>
+              </div>
+            </div>
           </article>
         </div>
       </div>

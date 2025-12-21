@@ -1,32 +1,50 @@
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 
-// 基础Schema
-const baseSchema = z.object({
+// 定义集合Schema
+const destinationsSchema = z.object({
   title: z.string(),
-  image: z.string().url(),
-  summary: z.string().optional(),
-  featured: z.boolean().optional()
-});
-
-// 目的地Schema
-const destinationsSchema = baseSchema.extend({
   region: z.string(),
   city: z.string(),
   season: z.string(),
-  body: z.string().optional()
+  image: z.string().url(),
+  summary: z.string(),
+  body: z.string().optional(),
+  featured: z.boolean().optional()
 });
 
-// 故事Schema
-const storiesSchema = baseSchema.extend({
+const storiesSchema = z.object({
+  title: z.string(),
   city: z.string(),
   author: z.string(),
   date: z.coerce.date(),
   excerpt: z.string(),
-  body: z.string().optional()
+  image: z.string().url(),
+  body: z.string().optional(),
+  featured: z.boolean().optional()
 });
 
-// 简化的集合定义
+const inSeasonSchema = z.object({
+  title: z.string(),
+  season: z.string(),
+  region: z.string(),
+  summary: z.string(),
+  image: z.string().url(),
+  body: z.string().optional(),
+  featured: z.boolean().optional()
+});
+
+const resortsSchema = z.object({
+  title: z.string(),
+  category: z.string(),
+  location: z.string(),
+  summary: z.string(),
+  image: z.string().url(),
+  body: z.string().optional(),
+  featured: z.boolean().optional()
+});
+
+// 定义集合
 const destinations = defineCollection({
   type: 'content',
   schema: destinationsSchema
@@ -37,7 +55,19 @@ const stories = defineCollection({
   schema: storiesSchema
 });
 
+const inSeason = defineCollection({
+  type: 'content',
+  schema: inSeasonSchema
+});
+
+const resorts = defineCollection({
+  type: 'content',
+  schema: resortsSchema
+});
+
 export const collections = {
   destinations,
-  stories
+  stories,
+  inSeason,
+  resorts
 };

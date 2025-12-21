@@ -6,7 +6,7 @@ export default defineConfig({
   site: 'https://explorechina.travel',
   integrations: [tailwind()],
   experimental: {
-    contentLayer: true  // 关键：启用内容层API
+    contentLayer: true
   },
   vite: {
     resolve: {
