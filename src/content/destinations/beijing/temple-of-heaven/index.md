@@ -1,11 +1,11 @@
 ---
-title: "Forbidden City"
-region: "Beijing"
-city: "Beijing"
-season: "Spring, Autumn"
-summary: "The imperial palace complex at the heart of Beijing, former home of emperors"
+title: 'Forbidden City'
+region: 'Beijing'
+city: 'Beijing'
+season: 'Spring, Autumn'
+summary: 'The imperial palace complex at the heart of Beijing, former home of emperors'
 featured: true
-image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Forbidden+City"
+image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Forbidden+City'
 ---
 
 The Forbidden City stands as one of humanity's greatest architectural achievements. Built in 1406-1420 during the Ming Dynasty, this massive palace complex served as the imperial home and ceremonial center for 24 emperors during the Ming and Qing dynasties.

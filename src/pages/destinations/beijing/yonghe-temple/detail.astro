@@ -1,29 +1,25 @@
 ---
-import Layout from '../../../../layouts/Layout.astro';
+import Layout from '@layouts/Layout.astro';
 import { getEntry } from 'astro:content';
 
 // 正确获取四级页面内容
-const { params } = Astro;
-const spotId = `beijing/yonghe-temple/detail`;
 
+let entry;
 try {
-  const entry = await getEntry('destinations', spotId);
-  // 使用entry数据
+  entry = await getEntry('destinations', 'beijing/yonghe-temple');
 } catch (error) {
-  // 处理错误
+  // 处理错误，使用测试内容
+  entry = {
+    data: {
+      title: "Yonghe Temple",
+      region: "Beijing",
+      city: "Beijing",
+      season: "Spring, Autumn",
+      image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Yonghe+Temple",
+      body: "Yonghe Temple, also known as the Lama Temple, is one of Beijing's most magnificent and historically significant monasteries. Built in 1694 during the Qing Dynasty as the residence of Emperor Yongzheng before he ascended the throne, it was converted into a temple in 1744 and has since served as both a Buddhist monastery and a college for training monks. This unique complex represents the harmonious blend of Han Chinese and Tibetan Buddhist architectural styles that characterize China's religious heritage."
+    }
+  };
 }
-
-// 或者直接硬编码测试内容
-const entry = {
-  data: {
-    title: "Yonghe Temple",
-    region: "Beijing",
-    city: "Beijing",
-    season: "Spring, Autumn",
-    image: "https://via.placeholder.com/1200x800/6366f1/ffffff?text=Yonghe+Temple",
-    body: "Yonghe Temple, also known as the Lama Temple, is one of Beijing's most magnificent and historically significant monasteries. Built in 1694 during the Qing Dynasty as the residence of Emperor Yongzheng before he ascended the throne, it was converted into a temple in 1744 and has since served as both a Buddhist monastery and a college for training monks. This unique complex represents the harmonious blend of Han Chinese and Tibetan Buddhist architectural styles that characterize China's religious heritage."
-  }
-};
 ---
 
 <Layout title={entry.data.title + " - Explore China"}>

@@ -1,0 +1,62 @@
+{
+  "path-intellisense.mappings": {
+    "@layouts": "${workspaceFolder}/src/layouts",
+    "@components": "${workspaceFolder}/src/components",
+    "@content": "${workspaceFolder}/src/content",
+    "@pages": "${workspaceFolder}/src/pages"
+  },
+  "path-intellisense.extensionOnImport": true,
+  "path-intellisense.showHiddenFiles": false,
+  "path-intellisense.includeExtensions": [
+    ".astro",
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".json",
+    ".md",
+    ".mdx"
+  ],
+  "path-intellisense.showFileIcons": true,
+  "path-intellisense.useWorkspaceRoot": true,
+  "path-intellisense.pattern": {
+    "**/*.astro": "${relativePath}",
+    "**/*.js": "${relativePath}",
+    "**/*.ts": "${relativePath}",
+    "**/*.jsx": "${relativePath}",
+    "**/*.tsx": "${relativePath}"
+  }
+}
+
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "astro"
+  ]
+}
+
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.organizeImports": true
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "astro"
+  ],
+  "prettier.requireConfig": true,
+  "files.autoSave": "onFocusChange",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

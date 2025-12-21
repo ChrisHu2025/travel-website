@@ -1,0 +1,63 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": [
+        "eslint:recommended"
+    ],
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "plugins": [
+        "astro"
+    ],
+    "rules": {
+        "no-unused-vars": "warn",
+        "no-undef": "error",
+        "no-console": "off",
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "comma-dangle": [
+            "error",
+            "never"
+        ],
+        "prefer-const": "error",
+        "no-trailing-spaces": "error",
+        "indent": [
+            "error",
+            2
+        ],
+        "linebreak-style": [
+            "error",
+            "windows"
+        ]
+    },
+    "overrides": [
+        {
+            "files": [
+                "*.astro"
+            ],
+            "parser": "astro-eslint-parser",
+            "parserOptions": {
+                "parser": "@typescript-eslint/parser",
+                "extraFileExtensions": [
+                    ".astro"
+                ]
+            },
+            "rules": {
+                "astro/missing-client-only-directive": "off",
+                "astro/missing-preact-signals-directive": "off",
+                "no-unused-vars": "off"
+            }
+        }
+    ]
+}

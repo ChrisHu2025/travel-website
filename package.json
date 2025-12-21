@@ -4,15 +4,30 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/tailwind": "^6.0.2",
-    "astro": "^5.16.5",
-    "astro-icon": "^1.1.5",
+    "@astrojs/tailwind": "^5.1.0",
+    "astro": "^4.15.0",
+    "astro-icon": "^1.1.0",
     "decap-cms-app": "^3.9.0",
-    "tailwindcss": "^3.4.19"
+    "path": "^0.12.7",
+    "tailwindcss": "^3.4.19",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@tailwindcss/typography": "^0.5.13",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-astro": "^1.5.0",
+    "fuse.js": "^7.0.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "vite": "^7.3.0"
   }
 }
