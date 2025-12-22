@@ -1,51 +1,77 @@
 ---
 import Layout from '@layouts/Layout.astro';
 import { getCollection, getEntry } from 'astro:content';
+import { cleanEntryId } from '../../utils/cleanEntryId';
 
-// 必需：为动态路由生成所有可能的路径
+// 为不同层级结构生成正确的路径
 export async function getStaticPaths() {
   try {
-    // 获取所有集合
     const destinations = await getCollection('destinations');
     const stories = await getCollection('stories');
     const inSeason = await getCollection('in-season');
     const resorts = await getCollection('resorts');
     
-    // 生成所有路径
     const paths = [];
     
-    // destinations 集合
+    // destinations: 4级结构 - /destinations/city/spot/
     destinations.forEach(entry => {
-      paths.push({
-        params: { category: 'destinations', slug: entry.id }
-      });
+      const cleanId = cleanEntryId(entry.id);
+      const parts = cleanId.split('/');
+      
+      if (parts.length >= 2) {
+        const city = parts[0];
+        const spot = parts.slice(1).join('/');
+        paths.push({
+          params: { 
+            category: 'destinations', 
+            slug: `${city}/${spot}`
+          }
+        });
+      }
     });
     
-    // stories 集合
+    // stories: 4级结构 - /stories/city/story/
     stories.forEach(entry => {
-      paths.push({
-        params: { category: 'stories', slug: entry.id }
-      });
+      const cleanId = cleanEntryId(entry.id);
+      const parts = cleanId.split('/');
+      
+      if (parts.length >= 2) {
+        const city = parts[0];
+        const story = parts.slice(1).join('/');
+        paths.push({
+          params: { 
+            category: 'stories', 
+            slug: `${city}/${story}`
+          }
+        });
+      }
     });
     
-    // in-season 集合
+    // in-season: 3级结构 - /in-season/spot/
     inSeason.forEach(entry => {
+      const spot = cleanEntryId(entry.id);
       paths.push({
-        params: { category: 'in-season', slug: entry.id }
+        params: { 
+          category: 'in-season', 
+          slug: spot
+        }
       });
     });
     
-    // resorts 集合
+    // resorts: 3级结构 - /resorts/resort/
     resorts.forEach(entry => {
+      const resort = cleanEntryId(entry.id);
       paths.push({
-        params: { category: 'resorts', slug: entry.id }
+        params: { 
+          category: 'resorts', 
+          slug: resort
+        }
       });
     });
     
     return paths;
   } catch (error) {
     console.error('Error generating static paths:', error);
-    // 返回空数组而不是抛出错误，允许构建继续
     return [];
   }
 }
@@ -60,11 +86,23 @@ const collectionName =
   category === 'stories' ? 'stories' :
   category === 'resorts' ? 'resorts' : null;
 
-// 获取内容
+// 获取内容 - 处理不同结构
 let entry = null;
 if (collectionName) {
   try {
-    entry = await getEntry(collectionName, slug);
+    // 清理slug参数
+    const cleanSlug = cleanEntryId(slug);
+    
+    // 重建集合ID
+    let id = cleanSlug;
+    
+    // 对于多级路径，需要匹配集合中的ID格式
+    if (category === 'destinations' || category === 'stories') {
+      // 在 Astro v4 中，ID 格式不同
+      id = `${category}/${cleanSlug}`;
+    }
+    
+    entry = await getEntry(collectionName, id);
   } catch (error) {
     console.error(`Error loading ${category}/${slug}:`, error);
   }

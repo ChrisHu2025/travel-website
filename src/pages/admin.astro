@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 ---
 
 <!DOCTYPE html>
@@ -46,22 +47,22 @@
   <!-- 使用CDN加载必要脚本 -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script src="https://unpkg.com/decap-cms@3.9.0/dist/decap-cms.js"></script>
-  
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       try {
         console.log('初始化CMS...');
-        
+
         // 注册预览样式
         CMS.registerPreviewStyle('/css/cms-preview.css');
-        
-        
-        
+
+
+
         console.log('CMS初始化成功');
-        
+
         // 隐藏加载指示器
         document.querySelector('.loading-container').style.display = 'none';
-        
+
       } catch (error) {
         console.error('CMS初始化失败:', error);
         document.querySelector('.loading-container').innerHTML = `

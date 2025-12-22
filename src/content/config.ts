@@ -1,11 +1,11 @@
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 
-// 定义集合Schema
+// 基础schema - 所有集合共享
 const baseSchema = z.object({
   title: z.string(),
   image: z.string().url(),
-  summary: z.string(),  // 确保所有集合都有summary字段
+  summary: z.string(),
   body: z.string().optional(),
   featured: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
@@ -21,25 +21,28 @@ const baseSchema = z.object({
   subtitle: z.string().optional()
 });
 
-// 扩展特定集合的Schema
+// destinations: 需要 region, city, season
 const destinationsSchema = baseSchema.extend({
   region: z.string(),
   city: z.string(),
   season: z.string()
 });
 
+// stories: 需要 city, author, date, excerpt
 const storiesSchema = baseSchema.extend({
   city: z.string(),
-  excerpt: z.string(),
-  author: z.string(),  // 确保有author字段
-  date: z.coerce.date() // 确保有date字段
+  author: z.string(),
+  date: z.coerce.date(),
+  excerpt: z.string()
 });
 
+// in-season: 需要 season, region
 const inSeasonSchema = baseSchema.extend({
   season: z.string(),
   region: z.string()
 });
 
+// resorts: 需要 category, location
 const resortsSchema = baseSchema.extend({
   category: z.string(),
   location: z.string()
@@ -69,6 +72,6 @@ const resorts = defineCollection({
 export const collections = {
   destinations,
   stories,
-  'in-season': inSeason,  // 保持字符串键名
+  'in-season': inSeason,
   resorts
 };
