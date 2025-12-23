@@ -3,72 +3,71 @@ import Layout from '@layouts/Layout.astro';
 import { getCollection, getEntry } from 'astro:content';
 import { cleanEntryId } from '../../utils/cleanEntryId';
 
-// 为不同层级结构生成正确的路径
+// ✅ 关键修复1: 所有 slug 参数必须返回字符串（不是数组）
 export async function getStaticPaths() {
   try {
     const destinations = await getCollection('destinations');
     const stories = await getCollection('stories');
     const inSeason = await getCollection('in-season');
     const resorts = await getCollection('resorts');
-    
+
     const paths = [];
-    
-    // destinations: 4级结构 - /destinations/city/spot/
+
+    // ✅ 关键修复2: destinations 和 stories 返回字符串 (beijing/forbidden-city)
     destinations.forEach(entry => {
       const cleanId = cleanEntryId(entry.id);
       const parts = cleanId.split('/');
-      
+
       if (parts.length >= 2) {
         const city = parts[0];
         const spot = parts.slice(1).join('/');
         paths.push({
-          params: { 
-            category: 'destinations', 
-            slug: `${city}/${spot}`
+          params: {
+            category: 'destinations',
+            slug: `${city}/${spot}` // ✅ 返回字符串
           }
         });
       }
     });
-    
-    // stories: 4级结构 - /stories/city/story/
+
+    // ✅ 关键修复3: stories 同理返回字符串
     stories.forEach(entry => {
       const cleanId = cleanEntryId(entry.id);
       const parts = cleanId.split('/');
-      
+
       if (parts.length >= 2) {
         const city = parts[0];
         const story = parts.slice(1).join('/');
         paths.push({
-          params: { 
-            category: 'stories', 
-            slug: `${city}/${story}`
+          params: {
+            category: 'stories',
+            slug: `${city}/${story}` // ✅ 返回字符串
           }
         });
       }
     });
-    
-    // in-season: 3级结构 - /in-season/spot/
+
+    // ✅ 关键修复4: in-season 和 resorts 返回字符串
     inSeason.forEach(entry => {
       const spot = cleanEntryId(entry.id);
       paths.push({
-        params: { 
-          category: 'in-season', 
-          slug: spot
+        params: {
+          category: 'in-season',
+          slug: spot // ✅ 返回字符串
         }
       });
     });
-    
-    // resorts: 3级结构 - /resorts/resort/
+
     resorts.forEach(entry => {
       const resort = cleanEntryId(entry.id);
       paths.push({
-        params: { 
-          category: 'resorts', 
-          slug: resort
+        params: {
+          category: 'resorts',
+          slug: resort // ✅ 返回字符串
         }
       });
     });
-    
+
     return paths;
   } catch (error) {
     console.error('Error generating static paths:', error);
@@ -76,35 +75,17 @@ export async function getStaticPaths() {
   }
 }
 
-// 获取当前页面参数
-const { category, slug } = Astro.params;
+// ✅ 关键修复5: 保持原有逻辑，但确保 slug 是字符串
+const { category, slug } = Astro.params; // ✅ slug 是字符串 (e.g. "beijing/forbidden-city")
+const cleanSlug = cleanEntryId(slug); // ✅ 直接使用字符串
 
-// 根据分类获取对应集合
-const collectionName = 
-  category === 'in-season' ? 'in-season' :
-  category === 'destinations' ? 'destinations' :
-  category === 'stories' ? 'stories' :
-  category === 'resorts' ? 'resorts' : null;
-
-// 获取内容 - 处理不同结构
+// ✅ 关键修复6: ID 直接使用 cleanSlug (无需 join)
 let entry = null;
-if (collectionName) {
+if (category) {
   try {
-    // 清理slug参数
-    const cleanSlug = cleanEntryId(slug);
-    
-    // 重建集合ID
-    let id = cleanSlug;
-    
-    // 对于多级路径，需要匹配集合中的ID格式
-    if (category === 'destinations' || category === 'stories') {
-      // 在 Astro v4 中，ID 格式不同
-      id = `${category}/${cleanSlug}`;
-    }
-    
-    entry = await getEntry(collectionName, id);
+    entry = await getEntry(category, cleanSlug); // ✅ ID = "beijing/forbidden-city"
   } catch (error) {
-    console.error(`Error loading ${category}/${slug}:`, error);
+    console.error(`Error loading ${category}/${cleanSlug}:`, error);
   }
 }
 
@@ -122,9 +103,9 @@ const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Co
     <!-- 三级页面大图区域 -->
     <section class="relative h-[60vh] md:h-[70vh]">
       <div class="absolute inset-0">
-        <img 
-          src={entry.data.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80'} 
-          alt={entry.data.title} 
+        <img
+          src={entry.data.image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80'}
+          alt={entry.data.title}
           class="w-full h-full object-cover"
         />
         <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
@@ -146,8 +127,8 @@ const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Co
           )}
           <div class="mt-6 flex flex-wrap gap-2">
             {(entry.data.tags || []).map((tag, index) => (
-              <span 
-                key={index} 
+              <span
+                key={index}
                 class="px-3 py-1 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm"
               >
                 {tag}
@@ -191,7 +172,7 @@ const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Co
               return (
                 <div class="mb-12" key={index}>
                   <h2 class="text-2xl font-serif font-bold text-gray-900 mb-6">{title || 'Section Title'}</h2>
-                  <div 
+                  <div
                     class="prose prose-lg max-w-none text-gray-700"
                     set:html={content.join('\n').replace(/!\[.*?\]\((.*?)\)/g, '<img src="$1" alt="Travel image" class="w-full rounded-xl shadow-md my-8">') || '<p>Content not available.</p>'}
                   />
@@ -229,9 +210,9 @@ const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Co
 
           <!-- 作者信息 -->
           <div class="mt-16 flex items-start space-x-6 pt-8 border-t border-gray-200">
-            <img 
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80" 
-              alt="Author" 
+            <img
+              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80"
+              alt="Author"
               class="w-16 h-16 rounded-full object-cover"
             />
             <div>
@@ -254,9 +235,9 @@ const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Co
           {[1, 2, 3].map((item, index) => (
             <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group" key={index}>
               <div class="h-48 overflow-hidden">
-                <img 
-                  src={`https://images.unsplash.com/photo-${1506744038136 + index * 1000}?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80`} 
-                  alt="Related content" 
+                <img
+                  src={`https://images.unsplash.com/photo-${1506744038136 + index * 1000}?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80`}
+                  alt="Related content"
                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
@@ -288,14 +269,14 @@ const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Co
             Never miss a travel story. Subscribe for more authentic experiences and insider tips.
           </p>
           <form class="max-w-md mx-auto flex flex-col sm:flex-row gap-4">
-            <input 
-              type="email" 
-              placeholder="Enter your email address" 
+            <input
+              type="email"
+              placeholder="Enter your email address"
               class="flex-1 px-6 py-4 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               class="bg-white text-indigo-600 font-medium px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors shadow-lg"
             >
               Join the Community
