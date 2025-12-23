@@ -14,6 +14,8 @@ collections:
     label: 'Destinations'
     folder: 'src/content/destinations'
     create: true
+    meta:
+      path: '{region}/{slug}'
     fields:
       - { label: 'Title', name: 'title', widget: 'string', required: true }
       - { label: 'Region', name: 'region', widget: 'string', required: true }
@@ -23,7 +25,6 @@ collections:
       - { label: 'Cover Image', name: 'image', widget: 'image', required: true }
       - { label: 'Featured', name: 'featured', widget: 'boolean', default: false }
       - { label: 'Detailed Introduction', name: 'body', widget: 'markdown', required: true }
-    meta: { path: '{region}/{slug}' } # 确保路径正确
 
   - name: 'in-season'
     label: 'In Season'
