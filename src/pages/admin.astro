@@ -4,13 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>内容管理系统 - 旅游网站</title>
-    <link rel="stylesheet" href="https://unpkg.com/decap-cms-app@3.1.1/dist/decap-cms.css" />
+    <link rel="stylesheet" href="https://unpkg.com/decap-cms-app@3.9.0/dist/decap-cms.css" />
     <!-- 直接引入Decap CMS脚本 -->
-    <script
-      src="https://unpkg.com/decap-cms-app@3.1.1/dist/decap-cms-app.js"
-      onload="console.log('Decap CMS App script loaded successfully');"
-      onerror="console.error('Failed to load Decap CMS App script');"
-    ></script>
+    <script src="https://unpkg.com/decap-cms-app@3.9.0/dist/decap-cms-app.js" onload="console.log('Decap CMS App script loaded successfully');" onerror="console.error('Failed to load Decap CMS App script');"></script>
   </head>
   <body>
     <!-- Decap CMS 标准挂载点 -->
@@ -28,9 +24,9 @@
       console.log('CMS manual init enabled');
 
       // 等待所有资源完全加载完成
-      window.addEventListener('load', function () {
+      window.addEventListener('load', function() {
         console.log('All resources loaded, starting CMS initialization');
-
+        
         // 检查CMS对象是否可用
         if (window.CMS) {
           console.log('CMS object is available');
