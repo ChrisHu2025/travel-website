@@ -4,7 +4,7 @@ backend:
   repo: ChrisHu2025/travel-website
   branch: main
   auth_scope: repo
-  client_id: Ov23liJds0MQcgZsIeob
+  client_id: ${GITHUB_CLIENT_ID}
 
 media_folder: 'public/images'
 public_folder: '/images'
