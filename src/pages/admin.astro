@@ -1,5 +1,7 @@
 ---
+// src/pages/admin.astro
 import '../styles/global.css';
+export const prerender = true;
 ---
 
 <!DOCTYPE html>
@@ -44,42 +46,65 @@ import '../styles/global.css';
     <p>正在加载内容管理系统...</p>
   </div>
 
-  <!-- 使用CDN加载必要脚本 -->
   <script src="https://unpkg.com/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
   <script>
+    window.CMS_MANUAL_INIT = true;
+
     document.addEventListener('DOMContentLoaded', function() {
-      try {
-        console.log('初始化CMS...');
+      console.log('监听页面加载完成，准备初始化 CMS...');
 
-        // 注册预览样式
-        CMS.registerPreviewStyle('/css/cms-preview.css');
+      function waitForCMS() {
+        if (typeof window.CMS === 'undefined') {
+          setTimeout(waitForCMS, 100);
+          return;
+        }
 
+        try {
+          console.log('✅ CMS 已加载，开始手动初始化...');
 
+          // 🔑 关键配置：使用 public_repo（因仓库为公开）
+          window.CMS.init({
+            config: {
+              backend: {
+                name: 'github',
+                repo: 'ChrisHu2025/travel-website',
+                branch: 'main',
+                auth_scope: 'public_repo', // ✅ 修正：仅需公开仓库权限
+                auth_type: 'implicit',
+                client_id: 'Ov23liJds0MQcgZsIeob'
+              },
+              load_config_file: false
+            }
+          });
 
-        console.log('CMS初始化成功');
+          // 💡 预览样式：仅当 /css/cms-preview.css 存在时启用
+          // 如果尚未创建该文件，请保持注释状态
+          // window.CMS.registerPreviewStyle('/css/cms-preview.css');
 
-        // 隐藏加载指示器
-        document.querySelector('.loading-container').style.display = 'none';
+          document.querySelector('.loading-container').style.display = 'none';
+          console.log('🎉 CMS 初始化成功！现在应使用 GitHub 登录。');
 
-      } catch (error) {
-        console.error('CMS初始化失败:', error);
-        document.querySelector('.loading-container').innerHTML = `
-          <div style="text-align: center; padding: 2rem;">
-            <h2 style="color: #e53e3e; margin-bottom: 1rem;">加载失败</h2>
-            <p style="margin-bottom: 1rem;">内容管理系统初始化失败，请尝试以下方法：</p>
-            <ul style="text-align: left; max-width: 500px; margin: 0 auto 1rem;">
-              <li>检查网络连接</li>
-              <li>确保所有依赖已正确安装</li>
-              <li>清除浏览器缓存后重试</li>
-            </ul>
-            <button onclick="location.reload()" style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
-              刷新页面
-            </button>
-            <p style="margin-top: 1rem; color: #666;">错误详情: ${error.message}</p>
-          </div>
-        `;
+        } catch (error) {
+          console.error('❌ CMS 手动初始化失败:', error);
+          document.querySelector('.loading-container').innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+              <h2 style="color: #e53e3e; margin-bottom: 1rem;">加载失败</h2>
+              <p style="margin-bottom: 1rem;">内容管理系统初始化失败，请尝试以下方法：</p>
+              <ul style="text-align: left; max-width: 500px; margin: 0 auto 1rem;">
+                <li>检查网络连接</li>
+                <li>清除浏览器缓存后重试</li>
+              </ul>
+              <button onclick="location.reload()" style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                刷新页面
+              </button>
+              <p style="margin-top: 1rem; color: #666;">错误详情: ${error.message}</p>
+            </div>
+          `;
+        }
       }
+
+      waitForCMS();
     });
   </script>
 </body>
