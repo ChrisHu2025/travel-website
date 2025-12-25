@@ -23,23 +23,35 @@
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/decap-cms-app@3.1.1/dist/decap-cms-app.js';
       script.onload = function () {
+        console.log('Decap CMS App loaded successfully');
         if (window.CMS) {
-          // 直接初始化CMS，使用完整的GitHub配置
-          window.CMS.init({
-            config: {
-              backend: {
-                name: 'github',
-                repo: 'ChrisHu2025/travel-website',
-                branch: 'main',
-                auth_scope: 'repo',
-                client_id: 'Ov23liJds0MQcgZsIeob'
-              },
-              site_url: 'https://explorechina.travel',
-              media_folder: 'public/images',
-              public_folder: '/images'
-            }
-          });
+          console.log('CMS object is available');
+          try {
+            // 直接初始化CMS，使用完整的GitHub配置
+            window.CMS.init({
+              config: {
+                backend: {
+                  name: 'github',
+                  repo: 'ChrisHu2025/travel-website',
+                  branch: 'main',
+                  auth_scope: 'repo',
+                  client_id: 'Ov23liJds0MQcgZsIeob'
+                },
+                site_url: 'https://explorechina.travel',
+                media_folder: 'public/images',
+                public_folder: '/images'
+              }
+            });
+            console.log('CMS initialized successfully');
+          } catch (error) {
+            console.error('Error initializing CMS:', error);
+          }
+        } else {
+          console.error('CMS object not found after script loading');
         }
+      };
+      script.onerror = function () {
+        console.error('Failed to load Decap CMS App script');
       };
       document.body.appendChild(script);
     </script>
