@@ -14,8 +14,6 @@ collections:
     label: 'Destinations'
     folder: 'src/content/destinations'
     create: true
-    meta:
-      path: '{region}/{slug}'
     fields:
       - { label: 'Title', name: 'title', widget: 'string', required: true }
       - { label: 'Region', name: 'region', widget: 'string', required: true }
