@@ -16,7 +16,33 @@ export const prerender = true;
   <!-- Decap CMS 标准挂载点 -->
   <div id="nc-root"></div>
 
-  <!-- 引入 Decap CMS 脚本 - 自动初始化 -->
-  <script src="https://unpkg.com/decap-cms@3.9.0/dist/decap-cms.js"></script>
+  <!-- 确保 CMS 脚本在页面加载完成后执行 -->
+  <script is:inline>
+    // 设置手动初始化标志
+    window.CMS_MANUAL_INIT = true;
+
+    // 动态加载 Decap CMS 脚本
+    window.addEventListener('DOMContentLoaded', function() {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/decap-cms@3.9.0/dist/decap-cms.js';
+      script.onload = function() {
+        // 确保 CMS 对象可用后再初始化
+        if (window.CMS) {
+          window.CMS.init({
+            config: {
+              backend: {
+                name: 'github',
+                repo: 'ChrisHu2025/travel-website',
+                branch: 'main',
+                auth_scope: 'repo',
+                client_id: 'Ov23liJds0MQcgZsIeob'
+              }
+            }
+          });
+        }
+      };
+      document.body.appendChild(script);
+    });
+  </script>
 </body>
 </html>
