@@ -1,16 +1,19 @@
 // astro.config.mjs
 import tailwind from '@astrojs/tailwind';
-import vercel from '@astrojs/vercel/serverless'; // ✅ 修正：明确指定 serverless 子路径
+import vercel from '@astrojs/vercel/serverless';
 import { defineConfig } from 'astro/config';
 import { resolve } from 'path';
 
 export default defineConfig({
   site: 'https://explorechina.travel',
   integrations: [tailwind()],
-  adapter: vercel(), // ✅ 使用 serverless 适配器
-  output: 'hybrid', // ✅ 必须为 'hybrid' 才能同时支持静态页和 API 路由
+  adapter: vercel({
+    // ✅ 关键修复：显式指定 Vercel 支持的运行时
+    runtime: 'nodejs20.x' // 或 'nodejs18.x' → 但必须用字符串形式且 Vercel 认可
+  }),
+  output: 'hybrid',
   experimental: {
-    contentLayer: true // 启用 Content Layer API（按需保留）
+    contentLayer: true
   },
   vite: {
     resolve: {
