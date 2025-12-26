@@ -1,59 +1,25 @@
 ---
 // src/pages/admin.astro
-// ========== 组件脚本区 ==========
 import '../styles/global.css';
+import { cmsConfig } from '../lib/cms/config';
 
-// 启用静态生成
+// 启用静态生成（CMS 页面是纯静态 HTML + JS）
 export const prerender = true;
 
-// CMS 配置
-const cmsConfig = {
-  backend: {
-    name: 'github',
-    repo: 'ChrisHu2025/travel-website',
-    branch: 'main',
-    auth_scope: 'public_repo',
-    auth_type: 'implicit',
-    client_id: 'Ov23liJds0MQcgZsIeob',
-    base_url: 'https://explorechina.travel'
-  },
-  site_url: 'https://explorechina.travel',
-  display_url: 'https://explorechina.travel',
-  media_folder: 'public/images/uploads',
-  public_folder: '/images/uploads',
-  load_config_file: false,
-  collections: [
-    {
-      name: 'destinations',
-      label: '推荐目的地',
-      label_singular: '目的地',
-      folder: 'src/content/destinations',
-      create: true,
-      slug: '{{slug}}',
-      fields: [
-        { label: '标题', name: 'title', widget: 'string' },
-        { label: '描述', name: 'description', widget: 'text' },
-        { label: '正文', name: 'body', widget: 'markdown' }
-      ]
-    }
-  ]
-};
-
-// 安全序列化配置（防止XSS）
+// 安全序列化（防 XSS）
 const serializedConfig = JSON.stringify(cmsConfig)
   .replace(/</g, '\\u003c')
   .replace(/>/g, '\\u003e');
 ---
 
-<!-- ========== 组件模板区 ========== -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>内容管理系统 - Explore China</title>
-  <!-- ✅ 生产环境锁定确切版本（同事建议） -->
-  <link rel="stylesheet" href="https://unpkg.com/decap-cms@3.2.1/dist/cms.css">
+  <!-- ✅ 使用 jsDelivr CDN（更稳定）并锁定 Decap CMS 3.9.0 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
     body {
       margin: 0;
@@ -81,23 +47,20 @@ const serializedConfig = JSON.stringify(cmsConfig)
   </style>
 </head>
 <body>
-  <!-- CMS 根容器 -->
   <div id="nc-root"></div>
 
-  <!-- 安全传递配置的 JSON 脚本标签 -->
+  <!-- 安全传递配置 -->
   <script id="cms-config-data" type="application/json">{serializedConfig}</script>
 
-  <!-- 加载状态 -->
   <div class="cms-loading" id="js-loading">
     <div class="loading-spinner"></div>
     <div class="loading-text">正在加载内容编辑器...</div>
   </div>
 
-  <!-- 错误提示 -->
   <div class="cms-error" id="js-error"></div>
 
-  <!-- ✅ 生产环境锁定确切版本（同事建议） -->
-  <script is:inline src="https://unpkg.com/decap-cms@3.2.1/dist/decap-cms.js"></script>
+  <!-- ✅ 加载 Decap CMS 3.9.0（与后端 token 格式兼容） -->
+  <script is:inline src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
   <script is:inline>
     window.CMS_MANUAL_INIT = true;
@@ -106,64 +69,48 @@ const serializedConfig = JSON.stringify(cmsConfig)
       const loadingEl = document.getElementById('js-loading');
       const errorEl = document.getElementById('js-error');
 
-      // 1. 安全读取配置
-      const configEl = document.getElementById('cms-config-data');
       let CONFIG;
       try {
+        const configEl = document.getElementById('cms-config-data');
         CONFIG = JSON.parse(configEl.textContent);
-        console.log('✅ CMS 配置加载成功，使用 Decap CMS v3.2.1');
+        console.log('✅ CMS 配置加载成功，使用 Decap CMS v3.9.0');
       } catch (e) {
-        showError('配置文件解析失败: ' + e.message);
+        showError('配置解析失败: ' + e.message);
         return;
       }
 
-      // 2. 初始化 CMS
       let attempts = 0;
-      const MAX_ATTEMPTS = 30; // 3秒超时
+      const MAX_ATTEMPTS = 30;
 
       function initCMS() {
         attempts++;
-
-        // 检查 CMS 库是否加载完成
         if (!window.CMS) {
           if (attempts >= MAX_ATTEMPTS) {
-            showError('加载 CMS 库超时，请刷新页面或检查网络连接');
+            showError('加载 CMS 库超时，请刷新页面');
             return;
           }
           setTimeout(initCMS, 100);
           return;
         }
 
-        // 验证版本（可选）
-        if (window.CMS.version && window.CMS.version !== '3.2.1') {
-          console.warn(`警告: 加载的版本(${window.CMS.version})与预期版本(3.2.1)不一致`);
-        }
-
         try {
-          // 初始化
           CMS.init({ config: CONFIG });
 
-          // 注册初始化成功回调
           CMS.registerEventListener({
             name: 'init',
-            handler: function() {
-              // 隐藏加载状态
+            handler: () => {
               loadingEl.classList.add('hidden');
-              setTimeout(() => {
-                loadingEl.style.display = 'none';
-              }, 300);
-              console.log('✅ CMS 界面初始化完成');
+              setTimeout(() => loadingEl.style.display = 'none', 300);
+              console.log('✅ CMS 初始化完成');
             }
           });
 
-          // 注册错误处理
           CMS.registerEventListener({
             name: 'error',
-            handler: function(error) {
+            handler: (error) => {
               showError('CMS 错误: ' + (error.message || '未知错误'));
             }
           });
-
         } catch (e) {
           showError('CMS 初始化失败: ' + e.message);
         }
@@ -175,19 +122,16 @@ const serializedConfig = JSON.stringify(cmsConfig)
           errorEl.style.display = 'block';
         }
         console.error('CMS Error:', message);
-        // 出错时也隐藏加载提示
         loadingEl.style.display = 'none';
       }
 
-      // 开始初始化
       initCMS();
     });
 
-    // 全局错误捕获
-    window.addEventListener('error', function(event) {
+    window.addEventListener('error', (event) => {
       const errorEl = document.getElementById('js-error');
       if (errorEl) {
-        errorEl.textContent = '页面脚本错误: ' + event.message;
+        errorEl.textContent = '脚本错误: ' + event.message;
         errorEl.style.display = 'block';
       }
     });
