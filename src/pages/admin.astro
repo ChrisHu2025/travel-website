@@ -1,15 +1,35 @@
 ---
 // src/pages/admin.astro
 import '../styles/global.css';
+// 从模块导入配置（请确保 src/lib/cms/config.ts 已正确定义并导出 cmsConfig）
 import { cmsConfig } from '../lib/cms/config';
 
-// 启用静态生成（CMS 页面是纯静态 HTML + JS）
 export const prerender = true;
 
-// 安全序列化（防 XSS）
-const serializedConfig = JSON.stringify(cmsConfig)
-  .replace(/</g, '\\u003c')
-  .replace(/>/g, '\\u003e');
+// ====== 安全序列化配置（解决JSON解析错误的核心） ======
+function serializeToSafeJSON(config) {
+  // 1. 深度克隆，确保操作不影响原模块
+  const configToSerialize = JSON.parse(JSON.stringify(config));
+
+  // 2. 强制关键开关（双重保险）
+  configToSerialize.load_config_file = false;
+
+  // 3. 执行标准序列化
+  let jsonString = JSON.stringify(configToSerialize);
+
+  // 4. 修复所有可能导致 script 标签内解析失败的字符
+  jsonString = jsonString
+    .replace(/\u2028/g, '\\u2028') // 替换行分隔符
+    .replace(/\u2029/g, '\\u2029') // 替换段落分隔符
+    .replace(/</g, '\\u003c')      // 转义 <
+    .replace(/>/g, '\\u003e')      // 转义 >
+    .replace(/&/g, '\\u0026')      // 转义 &
+    .replace(/'/g, '\\u0027');     // 转义单引号（防御性）
+
+  return jsonString;
+}
+
+const serializedConfig = serializeToSafeJSON(cmsConfig);
 ---
 
 <!DOCTYPE html>
@@ -18,7 +38,6 @@ const serializedConfig = JSON.stringify(cmsConfig)
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>内容管理系统 - Explore China</title>
-  <!-- ✅ 使用 jsDelivr CDN（更稳定）并锁定 Decap CMS 3.9.0 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
     body {
@@ -49,22 +68,19 @@ const serializedConfig = JSON.stringify(cmsConfig)
 <body>
   <div id="nc-root"></div>
 
-  <!-- 安全传递配置 -->
-  <script id="cms-config-data" type="application/json">{serializedConfig}</script>
+  <!-- ✅ 使用 set:html 安全注入已转义的JSON配置 -->
+  <script id="cms-config-data" type="application/json" set:html={serializedConfig}></script>
 
   <div class="cms-loading" id="js-loading">
     <div class="loading-spinner"></div>
     <div class="loading-text">正在加载内容编辑器...</div>
   </div>
-
   <div class="cms-error" id="js-error"></div>
 
-  <!-- ✅ 加载 Decap CMS 3.9.0（与后端 token 格式兼容） -->
   <script is:inline src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
   <script is:inline>
     window.CMS_MANUAL_INIT = true;
-
     document.addEventListener('DOMContentLoaded', function() {
       const loadingEl = document.getElementById('js-loading');
       const errorEl = document.getElementById('js-error');
@@ -72,16 +88,16 @@ const serializedConfig = JSON.stringify(cmsConfig)
       let CONFIG;
       try {
         const configEl = document.getElementById('cms-config-data');
-        CONFIG = JSON.parse(configEl.textContent);
-        console.log('✅ CMS 配置加载成功，使用 Decap CMS v3.9.0');
+        CONFIG = JSON.parse(configEl.textContent); // 现在这里一定是合法的JSON
+        console.log('✅ CMS 配置加载成功');
       } catch (e) {
-        showError('配置解析失败: ' + e.message);
+        console.error('❌ 配置解析失败:', e, '原始内容:', configEl?.textContent?.substring(0, 200));
+        showError('配置解析失败，请检查控制台。');
         return;
       }
 
       let attempts = 0;
       const MAX_ATTEMPTS = 30;
-
       function initCMS() {
         attempts++;
         if (!window.CMS) {
@@ -92,10 +108,9 @@ const serializedConfig = JSON.stringify(cmsConfig)
           setTimeout(initCMS, 100);
           return;
         }
-
         try {
           CMS.init({ config: CONFIG });
-
+          // 注册成功回调
           CMS.registerEventListener({
             name: 'init',
             handler: () => {
@@ -104,36 +119,24 @@ const serializedConfig = JSON.stringify(cmsConfig)
               console.log('✅ CMS 初始化完成');
             }
           });
-
+          // 注册错误监听
           CMS.registerEventListener({
             name: 'error',
-            handler: (error) => {
-              showError('CMS 错误: ' + (error.message || '未知错误'));
-            }
+            handler: (error) => { showError('CMS 错误: ' + (error.message || '未知错误')); }
           });
         } catch (e) {
           showError('CMS 初始化失败: ' + e.message);
         }
       }
-
-      function showError(message) {
+      function showError(msg) {
         if (errorEl) {
-          errorEl.textContent = message;
+          errorEl.textContent = msg;
           errorEl.style.display = 'block';
         }
-        console.error('CMS Error:', message);
+        console.error('CMS Error:', msg);
         loadingEl.style.display = 'none';
       }
-
       initCMS();
-    });
-
-    window.addEventListener('error', (event) => {
-      const errorEl = document.getElementById('js-error');
-      if (errorEl) {
-        errorEl.textContent = '脚本错误: ' + event.message;
-        errorEl.style.display = 'block';
-      }
     });
   </script>
 </body>

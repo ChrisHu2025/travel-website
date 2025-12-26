@@ -1,12 +1,15 @@
-import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
+import vercel from '@astrojs/vercel';
+import { defineConfig } from 'astro/config';
 import { resolve } from 'path';
 
 export default defineConfig({
-  site: 'https://explorechina.travel',  // 移除多余空格
+  site: 'https://explorechina.travel', // 移除多余空格
   integrations: [tailwind()],
+  adapter: vercel(),
+  output: 'server',
   experimental: {
-    contentLayer: true  // 启用Content Layer API
+    contentLayer: true // 启用Content Layer API
   },
   vite: {
     resolve: {

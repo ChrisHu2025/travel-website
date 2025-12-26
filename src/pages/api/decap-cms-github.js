@@ -1,30 +1,36 @@
 // src/pages/api/decap-cms-github.js
-export const prerender = false;
-
-// 硬编码 BASE_URL 以确保与 GitHub OAuth App 中注册的 Callback URL 完全一致
-const BASE_URL = 'https://explorechina.travel';
-const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
-
-// 从 Vercel 环境变量读取敏感凭据（仅在 Serverless Functions 中可用）
-const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
-const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
-
-// 启动时校验必要配置
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  throw new Error('Missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET in environment variables');
-}
+export const prerender = false; // 必须：声明为动态API路由
 
 export async function GET({ request }) {
+  // === 核心配置（硬编码确保绝对一致） ===
+  const BASE_URL = 'https://explorechina.travel';
+  const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
+  const SCOPE = 'public_repo'; // 公开仓库。私有仓库请改为 'repo'
+
+  // === 从Vercel环境变量读取密钥 ===
+  const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
+  const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
+
+  // 1. 安全检查（在函数内进行，符合Serverless最佳实践）
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error('FATAL: GITHUB_CLIENT_ID 或 GITHUB_CLIENT_SECRET 未设置。');
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `${BASE_URL}/admin#error=Server+configuration+error`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    });
+  }
+
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
 
-  // === 阶段一：无有效授权码，重定向至 GitHub 授权页 ===
-  if (!code || typeof code !== 'string' || code.trim().length === 0) {
-    const scope = 'public_repo'; // 若管理私有仓库，改为 'repo'
+  // === 阶段一：无code，重定向至GitHub授权页面 ===
+  if (!code) {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
       AUTH_ENDPOINT
-    )}&scope=${scope}`;
-
+    )}&scope=${SCOPE}`;
     return new Response(null, {
       status: 302,
       headers: {
@@ -34,9 +40,9 @@ export async function GET({ request }) {
     });
   }
 
-  // === 阶段二：处理 GitHub 回调，用 code 换取 access_token ===
+  // === 阶段二：有code，向GitHub交换access_token ===
   try {
-    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,40 +51,40 @@ export async function GET({ request }) {
       body: JSON.stringify({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
-        code: code.trim(),
+        code: code,
         redirect_uri: AUTH_ENDPOINT
       })
     });
 
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenResponse.json();
 
-    // 检查 GitHub 返回的错误
     if (tokenData.error) {
-      console.error('GitHub OAuth error:', tokenData);
-      throw new Error('github_auth_failed');
+      console.error('GitHub令牌交换错误:', tokenData);
+      // 重定向回CMS前台并携带错误信息
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: `${BASE_URL}/admin#error=Authentication+failed`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+      });
     }
 
-    // 确保 access_token 存在
-    if (!tokenData.access_token) {
-      console.error('No access_token in GitHub response:', tokenData);
-      throw new Error('invalid_token_response');
-    }
-
-    // ✅ 关键：使用 Decap CMS 能识别的 hash 格式
+    // ✅ 关键成功步骤：重定向回Decap CMS，并通过URL Hash传递token
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${BASE_URL}/admin/#token=${tokenData.access_token}`,
+        Location: `${BASE_URL}/admin#token=${tokenData.access_token}`,
         'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     });
   } catch (err) {
-    console.error('OAuth handler error:', err.message || err);
-    // 返回通用错误，避免泄露内部细节
+    console.error('认证代理函数异常:', err);
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${BASE_URL}/admin/#error=authentication_failed`
+        Location: `${BASE_URL}/admin#error=Internal+server+error`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     });
   }
