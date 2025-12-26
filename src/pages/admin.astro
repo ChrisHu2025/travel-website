@@ -1,25 +1,23 @@
----
 // src/pages/admin.astro
 import '../styles/global.css';
 export const prerender = true;
 
-// 🎯 在构建阶段准备完整的配置对象
+// 🎯 1. 构建时准备配置
 const cmsConfig = {
   backend: {
     name: 'github',
-    repo: 'ChrisHu2025/travel-website', // 请确保仓库名准确
+    repo: 'ChrisHu2025/travel-website',
     branch: 'main',
-    auth_scope: 'public_repo', // ⚠️ 重要：公开仓库用 ‘public_repo‘，私有仓库用 ‘repo‘
+    auth_scope: 'public_repo',
     auth_type: 'implicit',
-    client_id: 'Ov23liJds0MQcgZsIeob', // 🔥 硬编码在此处
-    base_url: 'https://explorechina.travel' // 帮助构建正确回调URL
+    client_id: 'Ov23liJds0MQcgZsIeob',
+    base_url: 'https://explorechina.travel'
   },
   site_url: 'https://explorechina.travel',
   display_url: 'https://explorechina.travel',
   media_folder: 'public/images/uploads',
   public_folder: '/images/uploads',
   load_config_file: false,
-  // 必须提供至少一个集合，CMS界面才能正常显示
   collections: [
     {
       name: 'destinations',
@@ -37,9 +35,21 @@ const cmsConfig = {
   ]
 };
 
-// 将配置对象转换为可在脚本中安全使用的JSON字符串
-const cmsConfigString = JSON.stringify(cmsConfig).replace(/</g, '\\u003c');
----
+// 🎯 2. 双重安全转义策略
+// 第一步：标准JSON序列化 + XSS防护
+let configString = JSON.stringify(cmsConfig)
+  .replace(/</g, '\\u003c')    // XSS防护：防止HTML注入
+  .replace(/>/g, '\\u003e');   // XSS防护：防止HTML注入
+
+// 第二步：针对模板字符串的安全转义（同事建议）
+const safeConfigString = configString
+  .replace(/\\/g, '\\\\')  // 转义反斜杠
+  .replace(/`/g, '\\`')    // 转义反引号
+  .replace(/\$/g, '\\$');  // 转义美元符号
+// 注意：单引号和换行符在模板字符串中不需要特殊转义
+
+// 🎯 3. 生成完整HTML（包含改进的用户体验）
+const fullHtml = `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -48,46 +58,174 @@ const cmsConfigString = JSON.stringify(cmsConfig).replace(/</g, '\\u003c');
   <title>内容管理系统 - Explore China</title>
   <link rel="stylesheet" href="https://unpkg.com/decap-cms@^3.0.0/dist/cms.css">
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    #nc-root { min-height: 100vh; }
-    .cms-loading { text-align: center; padding-top: 40vh; color: #666; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+    #nc-root {
+      min-height: 100vh;
+    }
+    .cms-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      z-index: 9999;
+      transition: opacity 0.3s;
+    }
+    .cms-loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    .loading-text {
+      color: #666;
+      font-size: 16px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .cms-error {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px 24px;
+      border-radius: 4px;
+      border-left: 4px solid #c62828;
+      max-width: 90%;
+      z-index: 10000;
+    }
   </style>
 </head>
 <body>
+  <!-- CMS根容器 -->
   <div id="nc-root"></div>
-  <div class="cms-loading" id="js-loading">正在加载内容编辑器...</div>
 
-  <!-- 关键：使用全局脚本加载库 -->
+  <!-- 加载状态 -->
+  <div class="cms-loading" id="js-loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">正在加载内容编辑器...</div>
+  </div>
+
+  <!-- 错误提示容器（初始隐藏） -->
+  <div class="cms-error" id="js-error" style="display: none;"></div>
+
+  <!-- Decap CMS脚本 -->
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 
-  <!-- 关键：内联脚本，其中包含由Astro直接写入的配置 -->
   <script>
-    // ✅ 修正点：使用 JSON.parse 将字符串解析为配置对象
-    const CONFIG = JSON.parse(`cmsConfigString`);
-
+    // 启用手动初始化模式
     window.CMS_MANUAL_INIT = true;
 
-    document.addEventListener('DOMContentLoaded', function() {
-      function init() {
-        if (!window.CMS) { setTimeout(init, 100); return; }
+    // ✅ 安全地解析配置（使用同事建议的反引号模板）
+    const CONFIG = JSON.parse(\`${safeConfigString}\`);
 
-        console.log('正在初始化CMS，配置：', CONFIG.backend);
+    // 错误处理器
+    const errorHandler = {
+      showError: function(message) {
+        const errorEl = document.getElementById('js-error');
+        if (errorEl) {
+          errorEl.textContent = '错误: ' + message;
+          errorEl.style.display = 'block';
+        }
+        console.error('CMS初始化错误:', message);
+      },
 
-        // 执行初始化
-        CMS.init({ config: CONFIG });
-
-        // 可选：成功加载后移除提示
-        CMS.registerEventListener({
-          name: 'init',
-          handler: () => {
-            const el = document.getElementById('js-loading');
-            if (el) el.style.display = 'none';
-            console.log('✅ CMS UI已就绪，应显示登录按钮。');
-          }
-        });
+      hideError: function() {
+        const errorEl = document.getElementById('js-error');
+        if (errorEl) {
+          errorEl.style.display = 'none';
+        }
       }
-      init();
+    };
+
+    // CMS初始化逻辑
+    document.addEventListener('DOMContentLoaded', function() {
+      let initAttempts = 0;
+      const maxAttempts = 30; // 30次尝试 * 100ms = 3秒超时
+
+      function initCMS() {
+        initAttempts++;
+
+        // 检查CMS库是否加载完成
+        if (!window.CMS) {
+          if (initAttempts >= maxAttempts) {
+            errorHandler.showError('无法加载CMS库，请刷新页面或检查网络连接');
+            return;
+          }
+          setTimeout(initCMS, 100);
+          return;
+        }
+
+        try {
+          // 隐藏错误提示
+          errorHandler.hideError();
+
+          // 初始化CMS
+          console.log('正在初始化CMS，使用配置:', CONFIG.backend);
+          CMS.init({ config: CONFIG });
+
+          // 注册初始化完成事件
+          CMS.registerEventListener({
+            name: 'init',
+            handler: function() {
+              // 隐藏加载状态
+              const loadingEl = document.getElementById('js-loading');
+              if (loadingEl) {
+                loadingEl.classList.add('hidden');
+                // 3秒后完全移除，避免干扰
+                setTimeout(() => {
+                  loadingEl.style.display = 'none';
+                }, 300);
+              }
+              console.log('✅ CMS UI已就绪');
+            }
+          });
+
+          // 注册错误事件
+          CMS.registerEventListener({
+            name: 'error',
+            handler: function(error) {
+              errorHandler.showError(error.message || '未知错误');
+            }
+          });
+
+        } catch (error) {
+          errorHandler.showError(error.message || '初始化失败');
+        }
+      }
+
+      // 开始初始化
+      initCMS();
+    });
+
+    // 全局错误捕获
+    window.addEventListener('error', function(event) {
+      errorHandler.showError(event.message || '页面脚本错误');
     });
   </script>
 </body>
 </html>
+`;
+
+// 🎯 4. 使用 set:html 指令直接输出完整HTML
+<Fragment set:html={fullHtml} />
