@@ -1,10 +1,12 @@
 ---
 // src/pages/admin.astro
-import { Fragment } from 'astro/jsx-runtime';
+// ========== 组件脚本区 ==========
 import '../styles/global.css';
+
+// 启用静态生成
 export const prerender = true;
 
-// 🎯 1. 构建时准备配置
+// CMS 配置
 const cmsConfig = {
   backend: {
     name: 'github',
@@ -37,89 +39,53 @@ const cmsConfig = {
   ]
 };
 
-// 🎯 2. 双重安全转义策略
-// 第一步：标准JSON序列化 + XSS防护
-let configString = JSON.stringify(cmsConfig)
-  .replace(/</g, '\\u003c')    // XSS防护：防止HTML注入
-  .replace(/>/g, '\\u003e');   // XSS防护：防止HTML注入
+// 安全序列化配置（防止XSS）
+const serializedConfig = JSON.stringify(cmsConfig)
+  .replace(/</g, '\\u003c')
+  .replace(/>/g, '\\u003e');
+---
 
-// 第二步：针对模板字符串的安全转义（同事建议）
-const safeConfigString = configString
-  .replace(/\\/g, '\\\\')  // 转义反斜杠
-  .replace(/`/g, '\\`')    // 转义反引号
-  .replace(/\$/g, '\\$');  // 转义美元符号
-
-// 🎯 3. 生成完整HTML（包含改进的用户体验）
-const fullHtml = `
+<!-- ========== 组件模板区 ========== -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>内容管理系统 - Explore China</title>
-  <link rel="stylesheet" href="https://unpkg.com/decap-cms@^3.0.0/dist/cms.css">
+  <!-- ✅ 生产环境锁定确切版本（同事建议） -->
+  <link rel="stylesheet" href="https://unpkg.com/decap-cms@3.2.1/dist/cms.css">
   <style>
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #f5f5f5;
     }
-    #nc-root {
-      min-height: 100vh;
-    }
+    #nc-root { min-height: 100vh; }
     .cms-loading {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: white;
-      z-index: 9999;
-      transition: opacity 0.3s;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: white; z-index: 9999; transition: opacity 0.3s;
     }
-    .cms-loading.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .cms-loading.hidden { opacity: 0; pointer-events: none; }
     .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
+      width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+      border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;
     }
-    .loading-text {
-      color: #666;
-      font-size: 16px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text { color: #666; font-size: 16px; }
     .cms-error {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #ffebee;
-      color: #c62828;
-      padding: 12px 24px;
-      border-radius: 4px;
-      border-left: 4px solid #c62828;
-      max-width: 90%;
-      z-index: 10000;
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: #ffebee; color: #c62828; padding: 12px 24px; border-radius: 4px;
+      border-left: 4px solid #c62828; max-width: 90%; z-index: 10000; display: none;
     }
   </style>
 </head>
 <body>
-  <!-- CMS根容器 -->
+  <!-- CMS 根容器 -->
   <div id="nc-root"></div>
+
+  <!-- 安全传递配置的 JSON 脚本标签 -->
+  <script id="cms-config-data" type="application/json">{serializedConfig}</script>
 
   <!-- 加载状态 -->
   <div class="cms-loading" id="js-loading">
@@ -127,92 +93,90 @@ const fullHtml = `
     <div class="loading-text">正在加载内容编辑器...</div>
   </div>
 
-  <!-- 错误提示容器（初始隐藏） -->
-  <div class="cms-error" id="js-error" style="display: none;"></div>
+  <!-- 错误提示 -->
+  <div class="cms-error" id="js-error"></div>
 
-  <!-- Decap CMS脚本 -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <!-- ✅ 生产环境锁定确切版本（同事建议） -->
+  <script is:inline src="https://unpkg.com/decap-cms@3.2.1/dist/decap-cms.js"></script>
 
-  <script>
-    // 启用手动初始化模式
+  <script is:inline>
     window.CMS_MANUAL_INIT = true;
 
-    // ✅ 安全地解析配置（使用字符串连接避免Astro构建时解析）
-    const CONFIG = JSON.parse('' + safeConfigString + '');
-
-    // 错误处理器
-    const errorHandler = {
-      showError: function(message) {
-        const errorEl = document.getElementById('js-error');
-        if (errorEl) {
-          errorEl.textContent = '错误: ' + message;
-          errorEl.style.display = 'block';
-        }
-        console.error('CMS初始化错误:', message);
-      },
-
-      hideError: function() {
-        const errorEl = document.getElementById('js-error');
-        if (errorEl) {
-          errorEl.style.display = 'none';
-        }
-      }
-    };
-
-    // CMS初始化逻辑
     document.addEventListener('DOMContentLoaded', function() {
-      let initAttempts = 0;
-      const maxAttempts = 30; // 30次尝试 * 100ms = 3秒超时
+      const loadingEl = document.getElementById('js-loading');
+      const errorEl = document.getElementById('js-error');
+
+      // 1. 安全读取配置
+      const configEl = document.getElementById('cms-config-data');
+      let CONFIG;
+      try {
+        CONFIG = JSON.parse(configEl.textContent);
+        console.log('✅ CMS 配置加载成功，使用 Decap CMS v3.2.1');
+      } catch (e) {
+        showError('配置文件解析失败: ' + e.message);
+        return;
+      }
+
+      // 2. 初始化 CMS
+      let attempts = 0;
+      const MAX_ATTEMPTS = 30; // 3秒超时
 
       function initCMS() {
-        initAttempts++;
+        attempts++;
 
-        // 检查CMS库是否加载完成
+        // 检查 CMS 库是否加载完成
         if (!window.CMS) {
-          if (initAttempts >= maxAttempts) {
-            errorHandler.showError('无法加载CMS库，请刷新页面或检查网络连接');
+          if (attempts >= MAX_ATTEMPTS) {
+            showError('加载 CMS 库超时，请刷新页面或检查网络连接');
             return;
           }
           setTimeout(initCMS, 100);
           return;
         }
 
-        try {
-          // 隐藏错误提示
-          errorHandler.hideError();
+        // 验证版本（可选）
+        if (window.CMS.version && window.CMS.version !== '3.2.1') {
+          console.warn(`警告: 加载的版本(${window.CMS.version})与预期版本(3.2.1)不一致`);
+        }
 
-          // 初始化CMS
-          console.log('正在初始化CMS，使用配置:', CONFIG.backend);
+        try {
+          // 初始化
           CMS.init({ config: CONFIG });
 
-          // 注册初始化完成事件
+          // 注册初始化成功回调
           CMS.registerEventListener({
             name: 'init',
             handler: function() {
               // 隐藏加载状态
-              const loadingEl = document.getElementById('js-loading');
-              if (loadingEl) {
-                loadingEl.classList.add('hidden');
-                // 3秒后完全移除，避免干扰
-                setTimeout(() => {
-                  loadingEl.style.display = 'none';
-                }, 300);
-              }
-              console.log('✅ CMS UI已就绪');
+              loadingEl.classList.add('hidden');
+              setTimeout(() => {
+                loadingEl.style.display = 'none';
+              }, 300);
+              console.log('✅ CMS 界面初始化完成');
             }
           });
 
-          // 注册错误事件
+          // 注册错误处理
           CMS.registerEventListener({
             name: 'error',
             handler: function(error) {
-              errorHandler.showError(error.message || '未知错误');
+              showError('CMS 错误: ' + (error.message || '未知错误'));
             }
           });
 
-        } catch (error) {
-          errorHandler.showError(error.message || '初始化失败');
+        } catch (e) {
+          showError('CMS 初始化失败: ' + e.message);
         }
+      }
+
+      function showError(message) {
+        if (errorEl) {
+          errorEl.textContent = message;
+          errorEl.style.display = 'block';
+        }
+        console.error('CMS Error:', message);
+        // 出错时也隐藏加载提示
+        loadingEl.style.display = 'none';
       }
 
       // 开始初始化
@@ -221,13 +185,12 @@ const fullHtml = `
 
     // 全局错误捕获
     window.addEventListener('error', function(event) {
-      errorHandler.showError(event.message || '页面脚本错误');
+      const errorEl = document.getElementById('js-error');
+      if (errorEl) {
+        errorEl.textContent = '页面脚本错误: ' + event.message;
+        errorEl.style.display = 'block';
+      }
     });
   </script>
 </body>
 </html>
-`;
----
-
-<!-- 4. 使用 set:html 指令直接输出完整HTML -->
-<Fragment set:html={fullHtml} />
