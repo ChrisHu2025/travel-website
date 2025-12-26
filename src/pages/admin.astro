@@ -1,4 +1,6 @@
+---
 // src/pages/admin.astro
+import { Fragment } from 'astro/jsx-runtime';
 import '../styles/global.css';
 export const prerender = true;
 
@@ -46,7 +48,6 @@ const safeConfigString = configString
   .replace(/\\/g, '\\\\')  // 转义反斜杠
   .replace(/`/g, '\\`')    // 转义反引号
   .replace(/\$/g, '\\$');  // 转义美元符号
-// 注意：单引号和换行符在模板字符串中不需要特殊转义
 
 // 🎯 3. 生成完整HTML（包含改进的用户体验）
 const fullHtml = `
@@ -136,8 +137,8 @@ const fullHtml = `
     // 启用手动初始化模式
     window.CMS_MANUAL_INIT = true;
 
-    // ✅ 安全地解析配置（使用同事建议的反引号模板）
-    const CONFIG = JSON.parse(\`${safeConfigString}\`);
+    // ✅ 安全地解析配置（使用字符串连接避免Astro构建时解析）
+    const CONFIG = JSON.parse('' + safeConfigString + '');
 
     // 错误处理器
     const errorHandler = {
@@ -226,6 +227,7 @@ const fullHtml = `
 </body>
 </html>
 `;
+---
 
-// 🎯 4. 使用 set:html 指令直接输出完整HTML
+<!-- 4. 使用 set:html 指令直接输出完整HTML -->
 <Fragment set:html={fullHtml} />
