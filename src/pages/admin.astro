@@ -1,30 +1,14 @@
 ---
 // src/pages/admin.astro
-import '../styles/global.css';
 import { cmsConfig } from '../lib/cms/config';
 
 export const prerender = true;
 
-// ====== 安全序列化配置（仅用于 <script id="cms-config">） ======
-function serializeToSafeJSON(config) {
-  const configToSerialize = JSON.parse(JSON.stringify({
-    ...config,
-    load_config_file: false // 强制关闭远程 config.yml 加载
-  }));
-
-  let jsonString = JSON.stringify(configToSerialize, null, 0); // 不要缩进，减少体积
-
-  // 转义可能破坏 script 标签的字符（虽然 JSON 通常安全，但防御性处理）
-  jsonString = jsonString
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029')
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e');
-
-  return jsonString;
-}
-
-const serializedConfig = serializeToSafeJSON(cmsConfig);
+// 序列化配置为内联 JSON（确保 load_config_file: false）
+const serializedConfig = JSON.stringify({
+  ...cmsConfig,
+  load_config_file: false
+});
 ---
 
 <!DOCTYPE html>
@@ -40,102 +24,142 @@ const serializedConfig = serializeToSafeJSON(cmsConfig);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #f5f5f5;
     }
-    #nc-root { min-height: 100vh; }
+    #nc-root {
+      min-height: 100vh;
+    }
     .cms-loading {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: white; z-index: 9999; transition: opacity 0.3s;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      z-index: 9999;
+      transition: opacity 0.3s;
     }
-    .cms-loading.hidden { opacity: 0; pointer-events: none; }
+    .cms-loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
     .loading-spinner {
-      width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
-      border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text { color: #666; font-size: 16px; }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading-text {
+      color: #666;
+      font-size: 16px;
+    }
     .cms-error {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: #ffebee; color: #c62828; padding: 12px 24px; border-radius: 4px;
-      border-left: 4px solid #c62828; max-width: 90%; z-index: 10000; display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px 24px;
+      border-radius: 4px;
+      border-left: 4px solid #c62828;
+      max-width: 90%;
+      z-index: 10000;
+      display: none;
     }
   </style>
 </head>
 <body>
   <div id="nc-root"></div>
 
-  <!-- ✅ 关键修改：使用官方支持的 <script id="cms-config">（无 type 属性） -->
-  <script id="cms-config" set:html={serializedConfig}></script>
+  <!-- ✅ 配置以原始 JSON 内联，供手动读取 -->
+  <script id="cms-config">{serializedConfig}</script>
 
+  <!-- ✅ Loading 和 Error UI -->
   <div class="cms-loading" id="js-loading">
     <div class="loading-spinner"></div>
     <div class="loading-text">正在加载内容编辑器...</div>
   </div>
   <div class="cms-error" id="js-error"></div>
 
-  <!-- ✅ 手动初始化开关 -->
+  <!-- ✅ 核心逻辑：手动初始化 CMS -->
   <script is:inline>
-    window.CMS_MANUAL_INIT = true;
-  </script>
-
-  <!-- ✅ 先加载 CMS 库 -->
-  <script is:inline src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
-
-  <!-- ✅ 再执行初始化和事件监听 -->
-  <script is:inline>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const loadingEl = document.getElementById('js-loading');
       const errorEl = document.getElementById('js-error');
 
       function showError(msg) {
+        console.error('CMS Error:', msg);
         if (errorEl) {
           errorEl.textContent = msg;
           errorEl.style.display = 'block';
         }
-        console.error('CMS Error:', msg);
-        loadingEl.style.display = 'none';
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
       }
 
-      // 等待 CMS 全局对象就绪
+      // 1. 手动读取配置
+      const configEl = document.getElementById('cms-config');
+      if (!configEl) {
+        showError('错误：未找到 CMS 配置脚本 (#cms-config)。');
+        return;
+      }
+
+      let CONFIG;
+      try {
+        CONFIG = JSON.parse(configEl.textContent); // ✅ 安全读取原始文本
+        console.log('✅ CMS 配置解析成功');
+      } catch (e) {
+        showError('CMS 配置解析失败: ' + e.message);
+        return;
+      }
+
+      // 2. 等待 CMS 库加载完成
       let attempts = 0;
-      const MAX_ATTEMPTS = 30;
+      const MAX_ATTEMPTS = 30; // 最多等待 3 秒
       function initCMS() {
         attempts++;
         if (!window.CMS) {
           if (attempts >= MAX_ATTEMPTS) {
-            showError('加载 CMS 库超时，请刷新页面');
+            showError('加载 Decap CMS 库超时，请检查网络或刷新页面。');
             return;
           }
           setTimeout(initCMS, 100);
           return;
         }
 
+        // 3. ✅ 手动初始化并传入配置
         try {
-          // ✅ 关键：不再传 config！CMS 已从 <script id="cms-config"> 自动读取
-          CMS.init();
+          CMS.init({ config: CONFIG });
 
-          // ✅ 修正事件名：'init' → 'initialized'
-          CMS.registerEventListener({
-            name: 'initialized',
-            handler: () => {
-              loadingEl.classList.add('hidden');
-              setTimeout(() => loadingEl.style.display = 'none', 300);
-              console.log('✅ CMS 初始化完成');
-            }
-          });
-
-          CMS.registerEventListener({
-            name: 'error',
-            handler: (error) => {
-              showError('CMS 错误: ' + (error.message || '未知错误'));
-            }
-          });
+          // ✅ 初始化成功：隐藏 loading
+          if (loadingEl) {
+            loadingEl.classList.add('hidden');
+            setTimeout(() => {
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, 300);
+          }
+          console.log('✅ Decap CMS 初始化完成');
         } catch (e) {
-          showError('CMS 初始化失败: ' + e.message);
+          showError('CMS 初始化失败: ' + (e.message || e.toString()));
         }
       }
 
       initCMS();
     });
   </script>
+
+  <!-- ✅ 加载 Decap CMS 库（放在最后，避免阻塞 DOM 构建） -->
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 </body>
 </html>
