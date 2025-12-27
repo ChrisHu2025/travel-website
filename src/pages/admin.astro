@@ -82,7 +82,7 @@ const serializedConfig = JSON.stringify({
   <div id="nc-root"></div>
 
   <!-- ✅ 配置以原始 JSON 内联，供手动读取 -->
-  <script id="cms-config">{serializedConfig}</script>
+  <script id="cms-config" set:html={serializedConfig}></script>
 
   <!-- ✅ Loading 和 Error UI -->
   <div class="cms-loading" id="js-loading">
