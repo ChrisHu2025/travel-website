@@ -25,12 +25,21 @@ export async function GET({ request }) {
 
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state'); // ✅ 新增：读取 state 参数
 
   // === 阶段一：无code，重定向至GitHub授权页面 ===
   if (!code) {
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
-      AUTH_ENDPOINT
-    )}&scope=${SCOPE}`;
+    // 构造 GitHub 授权 URL，透传 state（如果存在）
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      redirect_uri: AUTH_ENDPOINT,
+      scope: SCOPE
+    });
+    if (state) {
+      params.append('state', state); // ✅ 将 CMS 提供的 state 传给 GitHub（推荐，虽非强制）
+    }
+
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
     return new Response(null, {
       status: 302,
       headers: {
@@ -53,6 +62,7 @@ export async function GET({ request }) {
         client_secret: CLIENT_SECRET,
         code: code,
         redirect_uri: AUTH_ENDPOINT
+        // 注意：GitHub 不要求回传 state，但有些 provider 要求，这里可选
       })
     });
 
@@ -60,7 +70,6 @@ export async function GET({ request }) {
 
     if (tokenData.error) {
       console.error('GitHub令牌交换错误:', tokenData);
-      // 重定向回CMS前台并携带错误信息
       return new Response(null, {
         status: 302,
         headers: {
@@ -70,11 +79,17 @@ export async function GET({ request }) {
       });
     }
 
-    // ✅ 关键成功步骤：重定向回Decap CMS，并通过URL Hash传递token
+    // ✅ 关键修改：构建包含 token 和 state 的 hash
+    const hashParams = new URLSearchParams();
+    hashParams.append('token', tokenData.access_token);
+    if (state) {
+      hashParams.append('state', state); // ✅ 必须：将原始 state 透传回 CMS
+    }
+
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${BASE_URL}/admin#token=${tokenData.access_token}`,
+        Location: `${BASE_URL}/admin#${hashParams.toString()}`,
         'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     });
