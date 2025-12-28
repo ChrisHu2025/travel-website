@@ -6,6 +6,7 @@ export const cmsConfig = {
     repo: 'ChrisHu2025/travel-website',
     branch: 'main',
     auth_type: 'oauth',
+    base_url: 'https://explorechina.travel',
     auth_endpoint: 'https://explorechina.travel/api/decap-cms-github'
   },
   site_url: 'https://explorechina.travel',
