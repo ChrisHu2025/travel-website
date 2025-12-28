@@ -8,6 +8,7 @@ export const cmsConfig = {
     auth_type: 'oauth',
     base_url: 'https://explorechina.travel',
     auth_endpoint: '/api/decap-cms-github'
+    "use_state": true
   },
   site_url: 'https://explorechina.travel',
   display_url: 'https://explorechina.travel',
