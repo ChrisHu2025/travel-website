@@ -4,7 +4,7 @@ import { cmsConfig } from '../lib/cms/config';
 
 export const prerender = true;
 
-// 序列化配置为内联 JSON，并禁用 config.yml 加载
+// 序列化配置为内联 JSON
 const serializedConfig = JSON.stringify({
   ...cmsConfig,
   load_config_file: false
@@ -19,136 +19,86 @@ const serializedConfig = JSON.stringify({
   <title>内容管理系统 - Explore China</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-    }
+    /* 简单的 UI 样式 */
+    body { margin: 0; background: #f5f5f5; }
     .cms-loading {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: white;
-      z-index: 9999;
-      transition: opacity 0.3s;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: white; z-index: 9999;
     }
-    .cms-loading.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .loading-text {
-      color: #666;
-      font-size: 16px;
-    }
-    .cms-error {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #ffebee;
-      color: #c62828;
-      padding: 12px 24px;
-      border-radius: 4px;
-      border-left: 4px solid #c62828;
-      max-width: 90%;
-      z-index: 10000;
-      display: none;
+    .loading-text { margin-top: 15px; color: #666; font-family: sans-serif; }
+    .debug-console {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
+      background: #222; color: #0f0; font-family: monospace; font-size: 12px;
+      padding: 10px; overflow-y: auto; z-index: 10000; display: none; /* 默认隐藏，需要时可开启 */
     }
   </style>
 </head>
 <body>
-  <!-- ✅ 防止 Astro 添加 data-astro-cid -->
   <div id="nc-root" is:inline></div>
 
-  <!-- ✅ 配置脚本注入 (关键修改：使用 set:html 和 type="application/json") -->
+  <!-- ✅ 1. 注入配置 (type="application/json") -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- ✅ Loading UI -->
+  <!-- ✅ 2. Loading 界面 -->
   <div class="cms-loading" id="js-loading">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">正在加载内容编辑器...</div>
+    <div class="loading-spinner">Loading...</div>
+    <div class="loading-text">正在初始化 CMS... (按 F12 查看控制台日志)</div>
   </div>
-  <div class="cms-error" id="js-error"></div>
 
-  <!-- ✅ 1. 设置手动初始化标志 (必须最先执行) -->
+  <!-- ✅ 3. 核心调试脚本 (Debug Listener) -->
   <script is:inline>
+    // 开启手动初始化
     window.CMS_MANUAL_INIT = true;
+
+    // === 🕵️‍♂️ 侦探脚本：监听所有跨窗口消息 ===
+    window.addEventListener('message', (event) => {
+      console.log('📨 [Admin收到消息]', event);
+
+      // 检查是否是我们期望的 GitHub 认证消息
+      if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
+        console.log('✅ [Admin] 捕获到 GitHub 成功认证 Token！');
+        console.log('📦 数据内容:', event.data);
+        const jsonStr = event.data.match(/success:(.+)/)[1];
+        try {
+          const data = JSON.parse(jsonStr);
+          console.log('🔑 解析出的 Token:', data.token);
+          alert('系统已收到 GitHub 授权！如果页面未跳转，请检查 Decap CMS 配置。Token已获取。');
+        } catch (e) {
+          console.error('❌ 解析 Token 失败:', e);
+        }
+      }
+    });
+
+    console.log('📡 [Admin] 消息监听器已就绪，等待弹窗发送 Token...');
   </script>
 
-  <!-- ✅ 2. 加载 Decap CMS 库 (添加 defer 属性以不阻塞渲染) -->
+  <!-- ✅ 4. 加载 Decap CMS -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js" defer></script>
 
-  <!-- ✅ 3. 初始化逻辑 (等待 load 事件确保 CMS 库已完全就绪) -->
+  <!-- ✅ 5. 初始化脚本 -->
   <script is:inline>
     window.addEventListener('load', function () {
       const loadingEl = document.getElementById('js-loading');
-      const errorEl = document.getElementById('js-error');
       const configEl = document.getElementById('cms-config');
 
-      function showError(msg) {
-        console.error('CMS Error:', msg);
-        if (errorEl) {
-          errorEl.textContent = msg;
-          errorEl.style.display = 'block';
-        }
-        if (loadingEl) {
-          loadingEl.style.display = 'none';
-        }
-      }
-
-      // 检查 CMS 库是否加载
       if (!window.CMS) {
-        showError('Decap CMS 库未能加载，请检查网络连接或 CDN 状态。');
+        alert('Decap CMS 库加载失败，请检查网络！');
         return;
       }
 
-      // 读取并解析配置
-      let CONFIG;
       try {
-        if (!configEl) throw new Error('未找到配置脚本 #cms-config');
-        // textContent 可以正确获取 JSON 内容
-        CONFIG = JSON.parse(configEl.textContent || configEl.innerText);
-        console.log('✅ CMS 配置解析成功');
-      } catch (e) {
-        showError('CMS 配置解析失败: ' + e.message);
-        return;
-      }
+        const CONFIG = JSON.parse(configEl.textContent);
+        console.log('🚀 [Admin] 开始初始化 CMS, use_state:', CONFIG.backend.use_state);
 
-      // 执行初始化
-      try {
-        console.log('🚀 开始初始化 Decap CMS...');
         CMS.init({ config: CONFIG });
 
-        // 成功后隐藏 loading
-        if (loadingEl) {
-          setTimeout(() => {
-            loadingEl.classList.add('hidden');
-            setTimeout(() => {
-              if (loadingEl) loadingEl.style.display = 'none';
-            }, 300);
-          }, 500);
-        }
+        setTimeout(() => {
+          if (loadingEl) loadingEl.style.display = 'none';
+        }, 500);
       } catch (e) {
-        showError('CMS 初始化执行异常: ' + (e.message || e.toString()));
+        console.error('CMS Init Error:', e);
+        alert('CMS 初始化错误: ' + e.message);
       }
     });
   </script>
