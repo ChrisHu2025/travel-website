@@ -19,58 +19,83 @@ const serializedConfig = JSON.stringify({
   <title>内容管理系统 - Explore China</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
-    /* 简单的 UI 样式 */
-    body { margin: 0; background: #f5f5f5; }
+    body { margin: 0; background: #f5f5f5; font-family: -apple-system, sans-serif; }
     .cms-loading {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       background: white; z-index: 9999;
     }
-    .loading-text { margin-top: 15px; color: #666; font-family: sans-serif; }
-    .debug-console {
-      position: fixed; bottom: 0; left: 0; width: 100%; height: 150px;
-      background: #222; color: #0f0; font-family: monospace; font-size: 12px;
-      padding: 10px; overflow-y: auto; z-index: 10000; display: none; /* 默认隐藏，需要时可开启 */
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+      border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
     }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text { color: #666; font-size: 16px; }
   </style>
 </head>
 <body>
   <div id="nc-root" is:inline></div>
 
-  <!-- ✅ 1. 注入配置 (type="application/json") -->
+  <!-- ✅ 1. 注入配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
   <!-- ✅ 2. Loading 界面 -->
   <div class="cms-loading" id="js-loading">
-    <div class="loading-spinner">Loading...</div>
-    <div class="loading-text">正在初始化 CMS... (按 F12 查看控制台日志)</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-text">正在初始化内容管理系统...</div>
   </div>
 
-  <!-- ✅ 3. 核心调试脚本 (Debug Listener) -->
+  <!-- ✅ 3. 核心修复：手动捕获 Token 并强制登录 -->
   <script is:inline>
-    // 开启手动初始化
     window.CMS_MANUAL_INIT = true;
 
-    // === 🕵️‍♂️ 侦探脚本：监听所有跨窗口消息 ===
     window.addEventListener('message', (event) => {
-      console.log('📨 [Admin收到消息]', event);
-
-      // 检查是否是我们期望的 GitHub 认证消息
+      // 检查是否是 GitHub 认证消息
       if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-        console.log('✅ [Admin] 捕获到 GitHub 成功认证 Token！');
-        console.log('📦 数据内容:', event.data);
-        const jsonStr = event.data.match(/success:(.+)/)[1];
+        console.log('⚡️ [Force Login] 捕获到 Token，准备强制写入存储...');
+
         try {
+          const jsonStr = event.data.match(/success:(.+)/)[1];
           const data = JSON.parse(jsonStr);
-          console.log('🔑 解析出的 Token:', data.token);
-          alert('系统已收到 GitHub 授权！如果页面未跳转，请检查 Decap CMS 配置。Token已获取。');
+
+          if (data.token) {
+            // 构造 Decap CMS 需要的用户对象
+            const userObj = {
+              token: data.token,
+              backendName: 'github' // 必须与 config.backend.name 一致
+            };
+
+            // 🔐 强制写入 LocalStorage
+            // Decap CMS 启动时会检查这个 Key，如果有值，就认为已登录
+            const key = 'netlify-cms-user';
+            localStorage.setItem(key, JSON.stringify(userObj));
+
+            console.log('✅ Token 已写入 LocalStorage，准备刷新进入后台...');
+
+            // 更新 UI 提示
+            const loadingEl = document.getElementById('js-loading');
+            if (loadingEl) {
+              loadingEl.innerHTML = `
+                <div style="text-align:center">
+                  <h3 style="color:#2ecc71; margin-bottom:10px;">认证成功！</h3>
+                  <p style="color:#666;">正在跳转到后台...</p>
+                </div>
+              `;
+              loadingEl.style.display = 'flex';
+            }
+
+            // 🔄 1秒后刷新页面，让 CMS 读取刚刚写入的 Token
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }
         } catch (e) {
-          console.error('❌ 解析 Token 失败:', e);
+          console.error('❌ 强制登录失败:', e);
+          alert('登录过程中发生未知错误，请查看控制台。');
         }
       }
     });
-
-    console.log('📡 [Admin] 消息监听器已就绪，等待弹窗发送 Token...');
   </script>
 
   <!-- ✅ 4. 加载 Decap CMS -->
@@ -82,23 +107,24 @@ const serializedConfig = JSON.stringify({
       const loadingEl = document.getElementById('js-loading');
       const configEl = document.getElementById('cms-config');
 
-      if (!window.CMS) {
-        alert('Decap CMS 库加载失败，请检查网络！');
-        return;
-      }
+      if (!window.CMS) return;
 
       try {
         const CONFIG = JSON.parse(configEl.textContent);
-        console.log('🚀 [Admin] 开始初始化 CMS, use_state:', CONFIG.backend.use_state);
 
+        // 只有当 LocalStorage 里没有 Token 时，CMS 才会显示登录页
+        // 否则它会直接进入 Dashboard
         CMS.init({ config: CONFIG });
 
+        // 稍微延时隐藏 loading，避免闪烁
         setTimeout(() => {
+          // 如果当前是登录页（URL没有hash或hash是登录相关），隐藏loading显示登录按钮
+          // 如果已登录，CMS 会自己接管界面
           if (loadingEl) loadingEl.style.display = 'none';
         }, 500);
+
       } catch (e) {
         console.error('CMS Init Error:', e);
-        alert('CMS 初始化错误: ' + e.message);
       }
     });
   </script>
