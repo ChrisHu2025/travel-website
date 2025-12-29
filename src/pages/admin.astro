@@ -20,7 +20,6 @@ const serializedConfig = JSON.stringify({
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
     body { font-family: -apple-system, system-ui, sans-serif; background: #eee; margin: 0; }
-    /* Loading 遮罩层 */
     #custom-loading {
       position: fixed; inset: 0; background: white; z-index: 10000;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -31,112 +30,85 @@ const serializedConfig = JSON.stringify({
       animation: spin 1s linear infinite;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* 成功后的提示区 */
-    #success-box { display: none; text-align: center; }
-    .success-btn {
-      margin-top: 20px; padding: 10px 20px; background: #0070f3; color: white;
-      border: none; border-radius: 5px; cursor: pointer; font-size: 16px;
-    }
+    .status-text { margin-top: 15px; color: #666; font-size: 14px; }
   </style>
 </head>
 <body>
-  <!-- Decap CMS 挂载点 -->
   <div id="nc-root"></div>
 
-  <!-- 1. 注入配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 2. 自定义 Loading 界面 -->
   <div id="custom-loading">
-    <div id="spinner-box">
-      <div class="spinner"></div>
-      <p style="color:#666; margin-top:15px">正在初始化 CMS...</p>
-    </div>
-
-    <div id="success-box">
-      <h2 style="color: green;">✅ 认证成功！</h2>
-      <p>Token 已保存，正在进入后台...</p>
-      <button class="success-btn" onclick="window.location.reload()">如果不跳转，点击这里</button>
-    </div>
+    <div class="spinner"></div>
+    <div class="status-text" id="status-msg">正在初始化系统...</div>
   </div>
 
-  <!-- 3. 核心修复逻辑 -->
   <script is:inline>
-    // 标记为手动初始化
+    // 1. 标记手动初始化
     window.CMS_MANUAL_INIT = true;
 
-    // A. 监听 GitHub 认证消息 (Custom Authenticator)
+    // 2. 监听 Token 消息
     window.addEventListener('message', (event) => {
       if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-        console.log('🔐 [Auth] 收到 GitHub Token');
+        const msg = document.getElementById('status-msg');
+        msg.textContent = '认证成功！正在注入凭证...';
+        msg.style.color = 'green';
 
         try {
-          // 解析 Token
           const jsonStr = event.data.match(/success:(.+)/)[1];
           const data = JSON.parse(jsonStr);
 
           if (data.token) {
-            // 构造 User 对象 (注意 backendName 必须匹配)
-            const user = {
-              token: data.token,
-              backendName: 'github'
-            };
+            console.log('🚀 [Auth] Token 捕获成功，执行 Hash 注入跳转');
 
-            // 写入 LocalStorage
-            localStorage.setItem('netlify-cms-user', JSON.stringify(user));
-            console.log('💾 [Auth] Token 已写入 LocalStorage');
+            // 🛑 核心修改：不再依赖 LocalStorage
+            // 直接构造带 token 的 URL Hash
+            // Decap CMS 启动时会自动检测 #token=... 并登录
+            const newHash = '#token=' + data.token;
 
-            // 更新 UI
-            document.getElementById('spinner-box').style.display = 'none';
-            document.getElementById('success-box').style.display = 'block';
+            // 强制修改 URL Hash
+            window.location.hash = newHash;
 
-            // 延迟刷新页面 (确保写入完成)
+            // 稍等片刻让浏览器应用 Hash，然后刷新
             setTimeout(() => {
               window.location.reload();
-            }, 1000);
+            }, 100);
           }
         } catch (e) {
-          console.error('Auth Error:', e);
-          alert('认证数据解析失败，请查看控制台');
+          console.error('解析错误:', e);
+          alert('认证失败，请重试');
         }
       }
     });
   </script>
 
-  <!-- 4. 加载 CMS 库 -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
-  <!-- 5. 初始化 CMS -->
   <script is:inline>
+    // 3. 初始化 CMS
     window.addEventListener('load', function() {
-      const loading = document.getElementById('custom-loading');
       const configEl = document.getElementById('cms-config');
+      const loading = document.getElementById('custom-loading');
 
       if (!window.CMS) return;
 
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // 动态设置 base_url，防止 Config 冲突
+        // 动态设置 base_url (解决域名匹配问题)
         config.backend.base_url = window.location.origin;
 
-        // 初始化
+        console.log('🚀 CMS Init...');
         CMS.init({ config });
 
-        // 检查是否已登录 (是否存在 Token)
-        const user = localStorage.getItem('netlify-cms-user');
-        if (user) {
-          // 如果已登录，CMS 会接管页面，我们隐藏 Loading
-          setTimeout(() => {
-             loading.style.display = 'none';
-          }, 500);
-        } else {
-          // 如果未登录，Decap 会渲染登录页，我们也隐藏 Loading
-          setTimeout(() => {
-             loading.style.display = 'none';
-          }, 500);
-        }
+        // CMS 加载后隐藏 loading
+        // 如果 URL 里已经有 #token=...，CMS 会自动处理登录
+        setTimeout(() => {
+           // 只有当 CMS 真正挂载 UI 后才隐藏
+           // 简单的判断：如果页面上有登录按钮或者面板
+           loading.style.display = 'none';
+        }, 1000);
+
       } catch (e) {
         console.error('Init Error:', e);
       }
