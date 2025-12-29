@@ -4,7 +4,6 @@ import { cmsConfig } from '../lib/cms/config';
 
 export const prerender = true;
 
-// 序列化配置
 const serializedConfig = JSON.stringify({
   ...cmsConfig,
   load_config_file: false
@@ -16,72 +15,105 @@ const serializedConfig = JSON.stringify({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Content Management</title>
+  <title>Explore China CMS - 诊断模式</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
-    body { margin: 0; background: #eee; font-family: sans-serif; }
-    #login-status {
+    body { margin: 0; background: #f0f2f5; font-family: monospace; }
+
+    /* 诊断面板样式 */
+    #debug-panel {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.9); z-index: 9999;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.98); z-index: 20000;
+      display: none; /* 默认隐藏，触发时显示 */
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; box-sizing: border-box;
     }
-    .spinner {
-      width: 40px; height: 40px; border: 4px solid #ddd;
-      border-top: 4px solid #0070f3; border-radius: 50%;
-      animation: spin 1s linear infinite; margin-bottom: 20px;
+
+    .log-box {
+      width: 80%; max-width: 600px; height: 300px;
+      background: #1e1e1e; color: #00ff00;
+      padding: 15px; border-radius: 8px; overflow-y: auto;
+      margin-bottom: 20px; border: 1px solid #333;
+      white-space: pre-wrap; font-size: 13px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .action-btn {
+      padding: 15px 40px; font-size: 18px; font-weight: bold;
+      color: white; background: #0070f3; border: none; border-radius: 5px;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,112,243,0.3);
+      transition: transform 0.1s;
+    }
+    .action-btn:active { transform: scale(0.98); }
+
+    h2 { color: #333; font-family: sans-serif; }
   </style>
 </head>
 <body>
   <div id="nc-root"></div>
-
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 状态提示层（默认隐藏，收到Token后显示） -->
-  <div id="login-status" style="display:none;">
-    <div class="spinner"></div>
-    <h3 id="status-text">正在验证身份...</h3>
+  <!-- 诊断面板 -->
+  <div id="debug-panel">
+    <h2>🔐 认证诊断模式</h2>
+    <div class="log-box" id="screen-log">等待认证消息...</div>
+    <button class="action-btn" id="enter-btn" style="display:none" onclick="window.location.reload()">
+      ✅ 进入后台 (Reload)
+    </button>
   </div>
 
   <script is:inline>
+    // 1. 设置标记
     window.CMS_MANUAL_INIT = true;
 
-    // ✅✅✅ 核心监听器：无条件执行 ✅✅✅
+    // 2. 屏幕日志函数
+    function logToScreen(msg) {
+      const box = document.getElementById('screen-log');
+      const time = new Date().toLocaleTimeString();
+      box.innerHTML += `[${time}] ${msg}\n`;
+      box.scrollTop = box.scrollHeight;
+      console.log(msg); // 同时也打到控制台
+    }
+
+    // 3. 监听消息
     window.addEventListener('message', (event) => {
       if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
 
-        // 1. 立即显示 Loading 遮罩，防止用户重复点击
-        const statusEl = document.getElementById('login-status');
-        statusEl.style.display = 'flex';
-        document.getElementById('status-text').innerText = '认证成功！正在进入后台...';
-
-        console.log('🚀 收到 Token，准备跳转...');
+        // 显示面板
+        document.getElementById('debug-panel').style.display = 'flex';
+        logToScreen('📨 收到 GitHub 消息！');
 
         try {
-          // 2. 解析 Token
           const jsonStr = event.data.match(/success:(.+)/)[1];
           const data = JSON.parse(jsonStr);
 
           if (data.token) {
-            // 3. 🧹 清理可能存在的旧数据（防止干扰）
-            localStorage.removeItem('netlify-cms-user');
+            logToScreen(`🔑 Token 捕获成功 (长度: ${data.token.length})`);
 
-            // 4. 🔑 构造 Hash 链接
-            // Decap CMS 启动时会检查 URL 里的 #token=...
-            // 如果存在，它会自动完成登录
+            // --- 关键操作 A: 写入 LocalStorage ---
+            // 这是最核心的登录凭证
+            const userObj = {
+              token: data.token,
+              backendName: 'github' // 必须匹配 config 中的 backend.name
+            };
+            localStorage.setItem('netlify-cms-user', JSON.stringify(userObj));
+            logToScreen(`💾 已写入 LocalStorage: netlify-cms-user`);
+            logToScreen(`📄 内容预览: ${JSON.stringify(userObj).substring(0, 40)}...`);
+
+            // --- 关键操作 B: 注入 URL Hash ---
+            // 作为双重保险
             const newHash = `#token=${data.token}`;
-
-            console.log('执行 Hash 注入:', newHash);
-
-            // 5. 修改 URL 并强制刷新
             window.location.hash = newHash;
-            window.location.reload();
+            logToScreen(`🔗 已注入 URL Hash: #token=...`);
+
+            // --- 关键操作 C: 显示按钮 ---
+            logToScreen('✅ 准备就绪！请点击下方按钮进入后台。');
+            document.getElementById('enter-btn').style.display = 'block';
+
+          } else {
+            logToScreen('❌ 错误: 数据中没有 Token');
           }
         } catch (e) {
-          console.error('Login Failed:', e);
-          alert('登录数据解析失败');
-          statusEl.style.display = 'none';
+          logToScreen(`❌ 异常: ${e.message}`);
         }
       }
     });
@@ -90,7 +122,7 @@ const serializedConfig = JSON.stringify({
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
   <script is:inline>
-    // 标准初始化
+    // 4. 初始化 CMS
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
       if (!window.CMS) return;
@@ -98,9 +130,15 @@ const serializedConfig = JSON.stringify({
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // 动态域名适配
+        // 动态设置 base_url
         config.backend.base_url = window.location.origin;
         config.backend.auth_endpoint = '/api/decap-cms-github';
+
+        // 检查本地存储状态
+        const existingUser = localStorage.getItem('netlify-cms-user');
+        if (existingUser) {
+           console.log('检测到现有登录会话');
+        }
 
         CMS.init({ config });
 
