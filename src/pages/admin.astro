@@ -19,61 +19,62 @@ const serializedConfig = JSON.stringify({
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
     /* 简单的加载遮罩 */
-    #login-spinner {
-      position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999;
+    #login-overlay {
+      position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999;
       display: none; align-items: center; justify-content: center; flex-direction: column;
     }
-    .loader {
-      border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%;
-      width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;
+    .spinner {
+      border: 4px solid #f3f3f3; border-top: 4px solid #0070f3; border-radius: 50%;
+      width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    h3 { color: #333; font-family: sans-serif; }
   </style>
 </head>
 <body>
   <div id="nc-root"></div>
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <div id="login-spinner">
-    <div class="loader"></div>
-    <div id="login-text">正在验证身份...</div>
+  <!-- 登录中遮罩 -->
+  <div id="login-overlay">
+    <div class="spinner"></div>
+    <h3>认证成功！正在进入后台...</h3>
+    <p style="color:#666">如果长时间无反应，请刷新页面</p>
   </div>
 
   <script is:inline>
     // 1. 标记手动初始化
     window.CMS_MANUAL_INIT = true;
 
-    // 2. 手动监听器 (专门负责捕获 Token 并写入存储)
+    // 2. 监听器：收到 Token -> Hash注入 -> 刷新
     window.addEventListener('message', (event) => {
       if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-        console.log('⚡️ 收到 Token，正在处理...');
 
-        // 显示 Loading 防止重复点击
-        document.getElementById('login-spinner').style.display = 'flex';
+        // 显示遮罩
+        document.getElementById('login-overlay').style.display = 'flex';
+        console.log('⚡️ 收到 Token');
 
         try {
           const jsonStr = event.data.match(/success:(.+)/)[1];
           const data = JSON.parse(jsonStr);
 
           if (data.token) {
-            // 构造 Decap CMS 标准用户对象
-            const user = {
-              token: data.token,
-              backendName: 'github' // 必须匹配 config
-            };
+            // 🧹 清理旧的 LocalStorage，防止干扰
+            localStorage.removeItem('netlify-cms-user');
 
-            // 写入 LocalStorage
-            localStorage.setItem('netlify-cms-user', JSON.stringify(user));
-            console.log('💾 Token 已写入，准备刷新...');
+            // 🔗 构造 Hash
+            const newHash = `#token=${data.token}`;
+            console.log('注入 Hash 并刷新:', newHash);
 
-            // 强制刷新页面，触发“已登录”逻辑
-            setTimeout(() => {
-              window.location.reload();
-            }, 500);
+            // 🔄 修改 Hash 并刷新
+            // Decap CMS 重启后会检测到这个 Hash 并自动登录
+            window.location.hash = newHash;
+            window.location.reload();
           }
         } catch (e) {
-          console.error('Login Error:', e);
-          alert('认证失败');
+          console.error(e);
+          alert('认证出错，请重试');
+          document.getElementById('login-overlay').style.display = 'none';
         }
       }
     });
@@ -82,7 +83,7 @@ const serializedConfig = JSON.stringify({
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
   <script is:inline>
-    // 3. 智能初始化逻辑
+    // 3. 标准初始化
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
       if (!window.CMS) return;
@@ -90,27 +91,12 @@ const serializedConfig = JSON.stringify({
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // 🔍 检查是否已登录 (本地是否有 Token)
-        const user = localStorage.getItem('netlify-cms-user');
+        // ✅ 始终注入 base_url
+        // 这样无论是在登录页还是后台，配置都是指向你的 Vercel API
+        config.backend.base_url = window.location.origin;
+        config.backend.auth_endpoint = '/api/decap-cms-github';
 
-        if (user) {
-          // ✅ 场景 A: 已登录
-          // 关键操作：**不**注入 base_url
-          // 这样 CMS 就会直接连接 GitHub API 读取内容，而不是去连你的 Vercel API
-          console.log('✅ 检测到登录状态，直连 GitHub 模式');
-          // 确保 backend 里没有 base_url
-          delete config.backend.base_url;
-          delete config.backend.auth_endpoint;
-        } else {
-          // 🛑 场景 B: 未登录
-          // 关键操作：**注入** base_url
-          // 这样“Login with GitHub”按钮才知道去哪里发起认证
-          console.log('🔒 未登录，注入 Vercel 认证地址');
-          config.backend.base_url = window.location.origin;
-          config.backend.auth_endpoint = '/api/decap-cms-github';
-        }
-
-        // 启动 CMS
+        console.log('🚀 CMS Init (Base URL injected)');
         CMS.init({ config });
 
       } catch (e) {
