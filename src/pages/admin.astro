@@ -18,58 +18,90 @@ const serializedConfig = JSON.stringify({
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Management</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
+  <style>
+    body { margin: 0; background: #eee; font-family: sans-serif; }
+    #login-status {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9); z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #ddd;
+      border-top: 4px solid #0070f3; border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
   <div id="nc-root"></div>
 
-  <!-- 1. 注入配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 2. 手动初始化 -->
-  <script is:inline>window.CMS_MANUAL_INIT = true;</script>
+  <!-- 状态提示层（默认隐藏，收到Token后显示） -->
+  <div id="login-status" style="display:none;">
+    <div class="spinner"></div>
+    <h3 id="status-text">正在验证身份...</h3>
+  </div>
 
-  <!-- 3. 加载 CMS 库 -->
-  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
-
-  <!-- 4. 初始化与监听逻辑 -->
   <script is:inline>
-    // A. 安全网：手动监听 Token (防止 CMS 内部监听失败)
+    window.CMS_MANUAL_INIT = true;
+
+    // ✅✅✅ 核心监听器：无条件执行 ✅✅✅
     window.addEventListener('message', (event) => {
       if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-        console.log('⚡️ [Fallback Listener] 收到 Token，正在检查 CMS 状态...');
+
+        // 1. 立即显示 Loading 遮罩，防止用户重复点击
+        const statusEl = document.getElementById('login-status');
+        statusEl.style.display = 'flex';
+        document.getElementById('status-text').innerText = '认证成功！正在进入后台...';
+
+        console.log('🚀 收到 Token，准备跳转...');
+
         try {
+          // 2. 解析 Token
           const jsonStr = event.data.match(/success:(.+)/)[1];
           const data = JSON.parse(jsonStr);
 
-          // 如果 1 秒后 CMS 还没反应（页面没刷新），我们手动写入并刷新
-          setTimeout(() => {
-            const user = localStorage.getItem('netlify-cms-user');
-            if (!user) {
-              console.log('⚠️ CMS 未自动处理，执行强制登录...');
-              localStorage.setItem('netlify-cms-user', JSON.stringify({
-                token: data.token,
-                backendName: 'github'
-              }));
-              window.location.reload();
-            }
-          }, 1000);
-        } catch (e) { console.error(e); }
+          if (data.token) {
+            // 3. 🧹 清理可能存在的旧数据（防止干扰）
+            localStorage.removeItem('netlify-cms-user');
+
+            // 4. 🔑 构造 Hash 链接
+            // Decap CMS 启动时会检查 URL 里的 #token=...
+            // 如果存在，它会自动完成登录
+            const newHash = `#token=${data.token}`;
+
+            console.log('执行 Hash 注入:', newHash);
+
+            // 5. 修改 URL 并强制刷新
+            window.location.hash = newHash;
+            window.location.reload();
+          }
+        } catch (e) {
+          console.error('Login Failed:', e);
+          alert('登录数据解析失败');
+          statusEl.style.display = 'none';
+        }
       }
     });
+  </script>
 
-    // B. 标准初始化
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
+
+  <script is:inline>
+    // 标准初始化
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-      if (!window.CMS || !configEl) return;
+      if (!window.CMS) return;
 
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // 动态设置 base_url 匹配当前页面
+        // 动态域名适配
         config.backend.base_url = window.location.origin;
         config.backend.auth_endpoint = '/api/decap-cms-github';
 
-        console.log('✅ CMS Init with Base URL:', config.backend.base_url);
         CMS.init({ config });
 
       } catch (e) {
