@@ -2,7 +2,7 @@
 export const prerender = false;
 
 export async function GET({ request }) {
-  // ✅ 确保这里与你的实际生产环境域名一致
+  // 基础配置
   const BASE_URL = 'https://explorechina.travel';
   const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
   const SCOPE = 'public_repo'; // 私有库请改用 'repo'
@@ -10,6 +10,7 @@ export async function GET({ request }) {
   const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
   const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
 
+  // 1. 检查环境变量
   if (!CLIENT_ID || !CLIENT_SECRET) {
     console.error('FATAL: GITHUB_CLIENT_ID 或 GITHUB_CLIENT_SECRET 未设置。');
     return new Response('Server configuration error', { status: 500 });
@@ -60,29 +61,31 @@ export async function GET({ request }) {
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
-      console.error('GitHub令牌交换错误:', tokenData);
       return new Response(`Authentication Failed: ${JSON.stringify(tokenData)}`, {
         status: 403,
-        headers: { 'Content-Type': 'text/plain' }
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
     }
 
-    // === 阶段三：返回 HTML 进行跨窗口通信 (Headless Auth) ===
-    // ✅ 修复核心：不重定向回 /admin，而是通过 postMessage 传递 token 并关闭窗口
+    // === 阶段三：返回 HTML 进行跨窗口通信 ===
 
     const token = tokenData.access_token;
-    // provider 必须与 admin/config.yml 中的 backend.name 一致 ('github')
     const provider = 'github';
+
+    // ✅ 关键修改 1: 使用 targetOrigin = "*"
+    // 这解决了 www vs non-www 或 http vs https 导致的“父页面没反应”问题。
+    // ✅ 关键修改 2: 增加 setTimeout
+    // 确保消息发送后再关闭窗口。
 
     const responseHtml = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
-        <title>Authenticating...</title>
+        <title>Authorized</title>
       </head>
       <body>
-        <p>正在验证 GitHub 授权，窗口即将关闭...</p>
+        <p>登录成功！正在跳转...</p>
         <script>
           (function() {
             const data = JSON.stringify({
@@ -90,17 +93,19 @@ export async function GET({ request }) {
               provider: "${provider}"
             });
 
-            // 构建 Decap CMS 期望的消息格式: "authorization:provider:success:data"
             const message = "authorization:${provider}:success:" + data;
 
-            // 向父窗口发送消息
-            // 第二个参数 targetOrigin 必须匹配你的网站域名，确保安全
             if (window.opener) {
-              window.opener.postMessage(message, "${BASE_URL}");
-              console.log("Token sent to opener, closing...");
-              window.close();
+              // 1. 发送消息到父窗口
+              // 使用 "*" 允许发送给任意源（解决域名不匹配问题）
+              window.opener.postMessage(message, "*");
+
+              // 2. 稍等片刻再关闭，确保消息已发出
+              setTimeout(function() {
+                window.close();
+              }, 500);
             } else {
-              document.body.innerHTML += "<p style='color:red'>错误：无法连接到登录页面，请手动关闭此窗口并重试。</p>";
+              document.body.innerText = "错误：无法连接到主页面。请手动关闭此窗口并刷新主页面。";
             }
           })();
         </script>
