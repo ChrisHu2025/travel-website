@@ -2,7 +2,7 @@
 export const prerender = false;
 
 export async function GET({ request }) {
-  // 1. 动态获取当前请求的 Origin
+  // 动态获取当前请求的 Origin
   const reqUrl = new URL(request.url);
   const BASE_URL = reqUrl.origin;
   const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
@@ -61,22 +61,22 @@ export async function GET({ request }) {
     // === 阶段三：返回握手脚本 ===
     const token = tokenData.access_token;
     const provider = 'github';
+    // 构造数据字符串
     const data = JSON.stringify({ token: token, provider: provider });
 
-    // ✅ 修复逻辑：使用正确的方式拼接字符串，确保变量被解析
-    // 这里的 window.location.origin 确保消息发给当前域名
     const responseHtml = `
       <!DOCTYPE html>
       <html>
       <body>
       <script>
         (function() {
-          // 构造消息：authorization:github:success:{...}
           const message = 'authorization:${provider}:success:${data}';
 
           if (window.opener) {
-            // 发送消息给父窗口 (Admin页面)
-            window.opener.postMessage(message, window.location.origin);
+            // ✅✅✅ 关键修改：使用 "*" 允许跨子域通信 ✅✅✅
+            // 解决 www 与 non-www 导致的消息被浏览器拦截问题
+            window.opener.postMessage(message, "*");
+
             window.close();
           } else {
             document.body.innerText = "Error: Cannot communicate with parent window.";

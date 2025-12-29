@@ -17,50 +17,63 @@ const serializedConfig = JSON.stringify({
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Management</title>
-  <!-- 引入官方脚本和样式 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
 </head>
 <body>
-  <!-- 挂载点 -->
   <div id="nc-root"></div>
 
-  <!-- 1. 注入原始配置 -->
+  <!-- 1. 注入配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 2. 设置手动初始化 -->
+  <!-- 2. 手动初始化 -->
   <script is:inline>window.CMS_MANUAL_INIT = true;</script>
 
   <!-- 3. 加载 CMS 库 -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
-  <!-- 4. 标准初始化 (Standard Init) -->
+  <!-- 4. 初始化与监听逻辑 -->
   <script is:inline>
-    // 确保在 window load 后执行，避免 race condition
+    // A. 安全网：手动监听 Token (防止 CMS 内部监听失败)
+    window.addEventListener('message', (event) => {
+      if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
+        console.log('⚡️ [Fallback Listener] 收到 Token，正在检查 CMS 状态...');
+        try {
+          const jsonStr = event.data.match(/success:(.+)/)[1];
+          const data = JSON.parse(jsonStr);
+
+          // 如果 1 秒后 CMS 还没反应（页面没刷新），我们手动写入并刷新
+          setTimeout(() => {
+            const user = localStorage.getItem('netlify-cms-user');
+            if (!user) {
+              console.log('⚠️ CMS 未自动处理，执行强制登录...');
+              localStorage.setItem('netlify-cms-user', JSON.stringify({
+                token: data.token,
+                backendName: 'github'
+              }));
+              window.location.reload();
+            }
+          }, 1000);
+        } catch (e) { console.error(e); }
+      }
+    });
+
+    // B. 标准初始化
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-
-      if (!window.CMS) {
-        console.error('CMS library not loaded');
-        return;
-      }
+      if (!window.CMS || !configEl) return;
 
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // ✅✅✅ 官方标准做法：动态注入当前 Origin ✅✅✅
-        // 这确保了 Config 中的 base_url 与 API 的 Origin 100% 一致
-        // 从而通过 Decap CMS 内部的安全校验
+        // 动态设置 base_url 匹配当前页面
         config.backend.base_url = window.location.origin;
         config.backend.auth_endpoint = '/api/decap-cms-github';
 
-        console.log('✅ Initializing CMS with Standard Config');
-        console.log('Base URL:', config.backend.base_url);
-
+        console.log('✅ CMS Init with Base URL:', config.backend.base_url);
         CMS.init({ config });
 
       } catch (e) {
-        console.error('Configuration Error:', e);
-        document.body.innerHTML = '<p style="padding:20px;color:red">配置初始化失败，请刷新重试。</p>';
+        console.error('Init Error:', e);
       }
     });
   </script>
