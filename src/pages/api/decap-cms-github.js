@@ -2,13 +2,15 @@
 export const prerender = false;
 
 export async function GET({ request }) {
+  // ✅ 基础配置
   const BASE_URL = 'https://explorechina.travel';
   const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
-  const SCOPE = 'public_repo';
+  const SCOPE = 'public_repo'; // 如果是私有库请改用 'repo'
 
   const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
   const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
 
+  // 1. 检查环境变量
   if (!CLIENT_ID || !CLIENT_SECRET) {
     console.error('FATAL: GITHUB_CLIENT_ID 或 GITHUB_CLIENT_SECRET 未设置。');
     return new Response('Server configuration error', { status: 500 });
@@ -16,21 +18,14 @@ export async function GET({ request }) {
 
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  // ✅ 获取 URL 中的所有参数，其中包含了 GitHub 传回来的 state
-  const originalParams = new URLSearchParams(url.search);
 
   // === 阶段一：无 code，重定向到 GitHub 授权页 ===
   if (!code) {
-    const redirectUrl = new URL(AUTH_ENDPOINT);
-    for (const [key, value] of originalParams) {
-      redirectUrl.searchParams.set(key, value);
-    }
-
     const githubAuthUrl = new URL('https://github.com/login/oauth/authorize');
     githubAuthUrl.searchParams.set('client_id', CLIENT_ID);
-    githubAuthUrl.searchParams.set('redirect_uri', redirectUrl.toString());
+    githubAuthUrl.searchParams.set('redirect_uri', AUTH_ENDPOINT);
     githubAuthUrl.searchParams.set('scope', SCOPE);
-    // ✅ 这里的 state 会被 GitHub 原样带回到回调 URL 中
+    // 注意：这里不再传递 state 参数，因为 config.ts 中已禁用 use_state
 
     return new Response(null, {
       status: 302,
@@ -60,6 +55,7 @@ export async function GET({ request }) {
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
+      console.error('GitHub Token Exchange Error:', tokenData);
       return new Response(`Authentication Failed: ${JSON.stringify(tokenData)}`, {
         status: 403,
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
@@ -70,14 +66,8 @@ export async function GET({ request }) {
 
     const token = tokenData.access_token;
     const provider = 'github';
-    // ✅ 关键修复：从查询参数中提取 state
-    const state = originalParams.get('state') || '';
 
-    // 如果没有 state，可以在控制台报个警，但为了兼容性还是继续发送
-    if (!state) {
-      console.warn('Warning: No state parameter found in callback URL');
-    }
-
+    // 构建 HTML 响应
     const responseHtml = `
       <!DOCTYPE html>
       <html lang="en">
@@ -89,22 +79,22 @@ export async function GET({ request }) {
         <p>登录成功！正在跳转...</p>
         <script>
           (function() {
-            // ✅ 将 state 加入到返回的数据包中
+            // 构建消息数据，不包含 state
             const data = JSON.stringify({
               token: "${token}",
-              provider: "${provider}",
-              state: "${state}"
+              provider: "${provider}"
             });
 
-            // 构建标准消息格式
+            // Decap CMS 监听的消息格式: "authorization:provider:success:data"
             const message = "authorization:${provider}:success:" + data;
 
             if (window.opener) {
-              console.log("Sending message to opener with state...");
-              // 发送消息
+              console.log("Sending authentication message to opener...");
+
+              // 使用 "*" 允许发送给任意源，解决 www 和非 www 的匹配问题
               window.opener.postMessage(message, "*");
 
-              // 延时关闭
+              // 稍微延时后关闭窗口，确保消息已成功发出
               setTimeout(function() {
                 window.close();
               }, 500);
