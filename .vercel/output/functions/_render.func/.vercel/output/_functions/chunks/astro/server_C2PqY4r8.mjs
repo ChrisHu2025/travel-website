@@ -1,3 +1,4 @@
+import { bold } from 'kleur/colors';
 import { A as AstroError, E as EndpointDidNotReturnAResponse, I as InvalidComponentArgs, a as AstroGlobUsedOutside, b as AstroGlobNoMatch, M as MissingMediaQueryDirective, N as NoMatchingImport, O as OnlyResponseCanBeReturned, R as ResponseSentError, c as NoMatchingRenderer, d as NoClientOnlyHint, e as NoClientEntrypoint } from './assets-service_DGOMzPV2.mjs';
 import { clsx } from 'clsx';
 import { escape } from 'html-escaper';
@@ -16,33 +17,6 @@ const clientAddressSymbol = Symbol.for("astro.clientAddress");
 const clientLocalsSymbol = Symbol.for("astro.locals");
 const originPathnameSymbol = Symbol.for("astro.originPathname");
 const responseSentSymbol = Symbol.for("astro.responseSent");
-
-let FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM, isTTY=true;
-if (typeof process !== 'undefined') {
-	({ FORCE_COLOR, NODE_DISABLE_COLORS, NO_COLOR, TERM } = process.env || {});
-	isTTY = process.stdout && process.stdout.isTTY;
-}
-
-const $ = {
-	enabled: !NODE_DISABLE_COLORS && NO_COLOR == null && TERM !== 'dumb' && (
-		FORCE_COLOR != null && FORCE_COLOR !== '0' || isTTY
-	)
-};
-
-function init(x, y) {
-	let rgx = new RegExp(`\\x1b\\[${y}m`, 'g');
-	let open = `\x1b[${x}m`, close = `\x1b[${y}m`;
-
-	return function (txt) {
-		if (!$.enabled || txt == null) return txt;
-		return open + (!!~(''+txt).indexOf(close) ? txt.replace(rgx, close + open) : txt) + close;
-	};
-}
-const bold = init(1, 22);
-const dim = init(2, 22);
-const red = init(31, 39);
-const yellow = init(33, 39);
-const blue = init(34, 39);
 
 async function renderEndpoint(mod, context, ssr, logger) {
   const { request, url } = context;
@@ -2102,4 +2076,4 @@ function spreadAttributes(values = {}, _name, { class: scopedClassName } = {}) {
   return markHTMLString(output);
 }
 
-export { originPathnameSymbol as A, ASTRO_VERSION as B, clientLocalsSymbol as C, DEFAULT_404_COMPONENT as D, clientAddressSymbol as E, responseSentSymbol as F, renderPage as G, REWRITE_DIRECTIVE_HEADER_KEY as H, REWRITE_DIRECTIVE_HEADER_VALUE as I, renderEndpoint as J, REROUTABLE_STATUS_CODES as K, NOOP_MIDDLEWARE_HEADER as N, ROUTE_TYPE_HEADER as R, renderSlot as a, renderTemplate as b, createComponent as c, renderComponent as d, addAttribute as e, createAstro as f, decodeKey as g, renderUniqueStylesheet as h, renderScriptElement as i, createHeadAndContent as j, REROUTE_DIRECTIVE_HEADER as k, bold as l, maybeRenderHead as m, red as n, dim as o, blue as p, decryptString as q, renderHead as r, spreadAttributes as s, createSlotValueFromString as t, unescapeHTML as u, renderSlotToString as v, renderJSX as w, chunkToString as x, yellow as y, isRenderInstruction as z };
+export { ASTRO_VERSION as A, REWRITE_DIRECTIVE_HEADER_KEY as B, REWRITE_DIRECTIVE_HEADER_VALUE as C, DEFAULT_404_COMPONENT as D, renderEndpoint as E, REROUTABLE_STATUS_CODES as F, NOOP_MIDDLEWARE_HEADER as N, ROUTE_TYPE_HEADER as R, renderSlot as a, renderTemplate as b, createComponent as c, renderComponent as d, addAttribute as e, createAstro as f, decodeKey as g, renderUniqueStylesheet as h, renderScriptElement as i, createHeadAndContent as j, REROUTE_DIRECTIVE_HEADER as k, decryptString as l, maybeRenderHead as m, createSlotValueFromString as n, renderSlotToString as o, renderJSX as p, chunkToString as q, renderHead as r, spreadAttributes as s, isRenderInstruction as t, unescapeHTML as u, originPathnameSymbol as v, clientLocalsSymbol as w, clientAddressSymbol as x, responseSentSymbol as y, renderPage as z };

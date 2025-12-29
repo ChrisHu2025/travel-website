@@ -1,95 +1,79 @@
 // src/pages/api/decap-cms-github.js
+import { AuthorizationCode } from 'simple-oauth2';
+
 export const prerender = false;
 
 export async function GET({ request }) {
-  // 1. 动态获取当前请求的 Origin
+  // 1. 动态获取当前域名
   const reqUrl = new URL(request.url);
   const BASE_URL = reqUrl.origin;
-  const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
+  const callbackUrl = `${BASE_URL}/api/decap-cms-github`;
 
-  // 🔴 关键修改：使用 'repo' 权限
-  // 'public_repo' 可能导致 CMS 无法正确读取仓库信息，从而导致登录后卡死
-  const SCOPE = 'repo';
-
-  const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
-  const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
-
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    return new Response('Server config error: Missing Client ID/Secret', { status: 500 });
-  }
+  // 2. 初始化 OAuth2 客户端 (使用 simple-oauth2 库)
+  const client = new AuthorizationCode({
+    client: {
+      id: import.meta.env.GITHUB_CLIENT_ID,
+      secret: import.meta.env.GITHUB_CLIENT_SECRET
+    },
+    auth: {
+      tokenHost: 'https://github.com',
+      tokenPath: '/login/oauth/access_token',
+      authorizePath: '/login/oauth/authorize'
+    }
+  });
 
   const code = reqUrl.searchParams.get('code');
 
-  // === 阶段一：重定向到 GitHub ===
+  // === 阶段一：如果没有 Code，重定向去 GitHub 授权 ===
   if (!code) {
-    const githubAuthUrl = new URL('https://github.com/login/oauth/authorize');
-    githubAuthUrl.searchParams.set('client_id', CLIENT_ID);
-    githubAuthUrl.searchParams.set('redirect_uri', AUTH_ENDPOINT);
-    githubAuthUrl.searchParams.set('scope', SCOPE);
+    const authorizationUri = client.authorizeURL({
+      redirect_uri: callbackUrl,
+      scope: 'repo', // 关键：给足权限
+      state: 'no-state' // 配合 config 中 use_state: false
+    });
 
     return new Response(null, {
       status: 302,
-      headers: {
-        Location: githubAuthUrl.toString(),
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      }
+      headers: { Location: authorizationUri }
     });
   }
 
-  // === 阶段二：换取 Token ===
+  // === 阶段二：有 Code，使用库换取 Token ===
   try {
-    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify({
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        code: code,
-        redirect_uri: AUTH_ENDPOINT
-      })
-    });
+    const tokenParams = {
+      code,
+      redirect_uri: callbackUrl
+    };
 
-    const tokenData = await tokenResponse.json();
+    // 核心：库自动帮我们处理握手，如果有错它会抛出异常
+    const accessToken = await client.getToken(tokenParams);
+    const token = accessToken.token.access_token;
 
-    if (tokenData.error) {
-      return new Response(`Error: ${JSON.stringify(tokenData)}`, { status: 403 });
-    }
-
-    // === 阶段三：返回标准握手脚本 ===
-    const token = tokenData.access_token;
-    const provider = 'github';
-
-    // ✅ 标准通信脚本
-    const responseHtml = `
-      <!DOCTYPE html>
-      <html>
-      <body>
+    // === 阶段三：返回通信脚本 ===
+    // 这是一个标准的跨窗口通信脚本，兼容性最强
+    const script = `
       <script>
         (function() {
-          const msg = JSON.stringify({
-            token: "${token}",
-            provider: "${provider}"
-          });
-          // 使用 "*" 确保消息能跨子域发送 (如 www -> non-www)
-          if (window.opener) {
-            window.opener.postMessage("authorization:${provider}:success:" + msg, "*");
+          function receiveMessage(e) {
+            console.log("Archive: Window loaded");
+            // 发送消息给父窗口
+            window.opener.postMessage("authorization:github:success:" + JSON.stringify({
+              token: "${token}",
+              provider: "github"
+            }), "*");
             window.close();
           }
+          receiveMessage();
         })();
       </script>
-      </body>
-      </html>
     `;
 
-    return new Response(responseHtml, {
+    return new Response(script, {
       status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      headers: { 'Content-Type': 'text/html' }
     });
-  } catch (err) {
-    console.error(err);
-    return new Response('Internal Server Error', { status: 500 });
+  } catch (error) {
+    console.error('Access Token Error', error.message);
+    return new Response('Authentication failed: ' + error.message, { status: 500 });
   }
 }

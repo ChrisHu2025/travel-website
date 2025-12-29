@@ -1,59 +1,65 @@
-<!DOCTYPE html><html lang="zh-CN" data-astro-cid-2zp6q64z> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>内容管理系统 - Explore China</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css"><link rel="stylesheet" href="/_astro/_slug_.vpMZWsme.css">
-<style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#f5f5f5}.cms-loading[data-astro-cid-2zp6q64z]{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;z-index:9999;transition:opacity .3s}.cms-loading[data-astro-cid-2zp6q64z].hidden{opacity:0;pointer-events:none}.loading-spinner[data-astro-cid-2zp6q64z]{width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #3498db;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}@keyframes spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.loading-text[data-astro-cid-2zp6q64z]{color:#666;font-size:16px}.cms-error[data-astro-cid-2zp6q64z]{position:fixed;top:20px;left:50%;transform:translate(-50%);background:#ffebee;color:#c62828;padding:12px 24px;border-radius:4px;border-left:4px solid #c62828;max-width:90%;z-index:10000;display:none}
-</style><script type="module" src="/_astro/hoisted.D5IDRxW3.js"></script></head> <body data-astro-cid-2zp6q64z> <!-- ✅ 关键：is:inline 防止 Astro 添加 data-astro-cid 或干扰 --> <div id="nc-root" data-astro-cid-2zp6q64z></div> <!-- ✅ 配置：使用 set:html 避免转义 --> <script id="cms-config">{"backend":{"name":"github","repo":"ChrisHu2025/travel-website","branch":"main","auth_type":"oauth","base_url":"https://explorechina.travel","auth_endpoint":"/api/decap-cms-github","use_state":true},"site_url":"https://explorechina.travel","display_url":"https://explorechina.travel","media_folder":"public/images/uploads","public_folder":"/images/uploads","load_config_file":false,"collections":[{"name":"destinations","label":"推荐目的地","label_singular":"目的地","folder":"src/content/destinations","create":true,"slug":"{{slug}}","fields":[{"label":"标题","name":"title","widget":"string","required":true},{"label":"Region","name":"region","widget":"string","required":true},{"label":"City","name":"city","widget":"string","required":true},{"label":"Summary","name":"summary","widget":"string","required":true},{"label":"Best Season","name":"season","widget":"string","required":true},{"label":"Cover Image","name":"image","widget":"image","required":true},{"label":"Featured","name":"featured","widget":"boolean","default":false},{"label":"Detailed Introduction","name":"body","widget":"markdown","required":true}]},{"name":"in-season","label":"当季推荐","label_singular":"季节目的地","folder":"src/content/in-season","create":true,"slug":"{{slug}}","fields":[{"label":"标题","name":"title","widget":"string","required":true},{"label":"Season","name":"season","widget":"string","required":true,"hint":"e.g., Spring, Summer, Autumn, Winter or specific months"},{"label":"Region","name":"region","widget":"string","required":true},{"label":"Summary","name":"summary","widget":"string","required":true,"hint":"Short description for card display (80-120 characters)"},{"label":"Best Time","name":"best_time","widget":"string","required":true,"hint":"Most specific optimal viewing period"},{"label":"Cover Image","name":"image","widget":"image","required":true,"hint":"Main hero image for the seasonal destination"},{"label":"Featured","name":"featured","widget":"boolean","default":false,"hint":"Mark for homepage and featured sections"},{"label":"Detailed Description","name":"body","widget":"markdown","required":true,"hint":"Full detailed description with history, best practices, and travel tips"},{"label":"Must-See Features","name":"features","widget":"list","hint":"List of key attractions or viewing spots"},{"label":"Travel Tips","name":"travel_tips","widget":"list","hint":"Practical advice for visitors"}]},{"name":"resorts","label":"度假胜地","label_singular":"度假村","folder":"src/content/resorts","create":true,"slug":"{{slug}}","fields":[{"label":"Resort Name","name":"title","widget":"string","required":true},{"label":"Category","name":"category","widget":"string","required":true,"hint":"Beach, Mountain, Cultural, Spa, etc."},{"label":"Location","name":"location","widget":"string","required":true},{"label":"Summary","name":"summary","widget":"string","required":true,"hint":"Short description for card display (80-120 characters)"},{"label":"Best Season","name":"season","widget":"string","required":true,"hint":"Peak season or best time to visit"},{"label":"Cover Image","name":"image","widget":"image","required":true,"hint":"Main hero image for the resort"},{"label":"Featured","name":"featured","widget":"boolean","default":false,"hint":"Mark for homepage and featured sections"},{"label":"Detailed Description","name":"body","widget":"markdown","required":true,"hint":"Full detailed description with amenities, activities, and travel tips"},{"label":"Amenities","name":"amenities","widget":"list","hint":"List of resort facilities and services"},{"label":"Travel Tips","name":"travel_tips","widget":"list","hint":"Practical advice for visitors"}]},{"name":"stories","label":"旅行故事","label_singular":"故事","folder":"src/content/stories","create":true,"slug":"{{slug}}","fields":[{"label":"Story Title","name":"title","widget":"string","required":true},{"label":"City","name":"city","widget":"string","required":true},{"label":"Author","name":"author","widget":"string","required":true},{"label":"Date","name":"date","widget":"datetime","required":true},{"label":"Excerpt","name":"excerpt","widget":"text","required":true},{"label":"Cover Image","name":"image","widget":"image","required":true},{"label":"Featured","name":"featured","widget":"boolean","default":false},{"label":"Season","name":"season","widget":"string"},{"label":"Reading Time","name":"reading_time","widget":"number"},{"label":"Tags","name":"tags","widget":"list"},{"label":"Full Story","name":"body","widget":"markdown","required":true}]},{"name":"homepage","label":"首页配置","files":[{"label":"Hero Content","name":"hero","file":"src/content/homepage/hero.yaml","fields":[{"label":"Main Title","name":"title","widget":"string"},{"label":"Description","name":"description","widget":"string"},{"label":"Background Image","name":"image","widget":"image"}]},{"label":"Current Display Section","name":"current-display","file":"src/content/homepage/current-display.yaml","fields":[{"label":"Left Top Card","name":"left_top_card","widget":"relation","collection":"destinations","search_fields":["title"],"value_field":"title"},{"label":"Left Bottom Card","name":"left_bottom_card","widget":"relation","collection":"in-season","search_fields":["title"],"value_field":"title"},{"label":"Middle Top Card","name":"middle_top_card","widget":"relation","collection":"destinations","search_fields":["title"],"value_field":"title"},{"label":"Middle Bottom Card","name":"middle_bottom_card","widget":"relation","collection":"resorts","search_fields":["title"],"value_field":"title"},{"label":"Right Cards","name":"right_cards","widget":"list","field":{"label":"Card","name":"card","widget":"relation","collection":"stories","search_fields":["title"],"value_field":"title"}}]},{"label":"Scroll Sections","name":"scroll-sections","file":"src/content/homepage/scroll-sections.yaml","fields":[{"label":"Destinations Section","name":"destinations_section","widget":"relation","collection":"destinations","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"},{"label":"In Season Section","name":"in_season_section","widget":"relation","collection":"in-season","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"},{"label":"Resorts Section","name":"resorts_section","widget":"relation","collection":"resorts","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"},{"label":"Stories Section","name":"stories_section","widget":"relation","collection":"stories","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"}]}]}]}</script> <!-- ✅ UI 元素 --> <div class="cms-loading" id="js-loading" data-astro-cid-2zp6q64z> <div class="loading-spinner" data-astro-cid-2zp6q64z></div> <div class="loading-text" data-astro-cid-2zp6q64z>正在加载内容编辑器...</div> </div> <div class="cms-error" id="js-error" data-astro-cid-2zp6q64z></div> <!-- ✅ 启用手动初始化模式（必须在 decap-cms.js 之前！） --> <script>
-    window.CMS_MANUAL_INIT = true;
-  </script> <!-- ✅ 手动初始化逻辑 --> <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const loadingEl = document.getElementById('js-loading');
-      const errorEl = document.getElementById('js-error');
+<!DOCTYPE html><html lang="zh-CN" data-astro-cid-2zp6q64z> <head><meta charset="UTF-8"><title>Content Manager</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css"><link rel="stylesheet" href="/_astro/_slug_.2eiJCVx7.css">
+<style>#auth-overlay[data-astro-cid-2zp6q64z]{position:fixed;inset:0;z-index:10000;background:#f4f6f8;display:none;flex-direction:column;align-items:center;justify-content:center}.auth-box[data-astro-cid-2zp6q64z]{background:#fff;padding:40px;border-radius:12px;box-shadow:0 10px 25px #0000001a;text-align:center;width:320px}.btn[data-astro-cid-2zp6q64z]{background:#24292e;color:#fff;border:none;padding:12px;width:100%;border-radius:6px;font-size:16px;font-weight:600;cursor:pointer;transition:.2s;margin-top:20px}.btn[data-astro-cid-2zp6q64z]:hover{background:#000}.status[data-astro-cid-2zp6q64z]{margin-top:15px;font-size:13px;color:#666;min-height:20px}
+</style><script type="module" src="/_astro/hoisted.D5IDRxW3.js"></script></head> <body data-astro-cid-2zp6q64z> <div id="nc-root" data-astro-cid-2zp6q64z></div> <script id="cms-config" type="application/json">{"backend":{"name":"github","repo":"ChrisHu2025/travel-website","branch":"main"},"site_url":"https://explorechina.travel","display_url":"https://explorechina.travel","media_folder":"public/images/uploads","public_folder":"/images/uploads","load_config_file":false,"collections":[{"name":"destinations","label":"推荐目的地","label_singular":"目的地","folder":"src/content/destinations","create":true,"slug":"{{slug}}","fields":[{"label":"标题","name":"title","widget":"string","required":true},{"label":"Region","name":"region","widget":"string","required":true},{"label":"City","name":"city","widget":"string","required":true},{"label":"Summary","name":"summary","widget":"string","required":true},{"label":"Best Season","name":"season","widget":"string","required":true},{"label":"Cover Image","name":"image","widget":"image","required":true},{"label":"Featured","name":"featured","widget":"boolean","default":false},{"label":"Detailed Introduction","name":"body","widget":"markdown","required":true}]},{"name":"in-season","label":"当季推荐","label_singular":"季节目的地","folder":"src/content/in-season","create":true,"slug":"{{slug}}","fields":[{"label":"标题","name":"title","widget":"string","required":true},{"label":"Season","name":"season","widget":"string","required":true,"hint":"e.g., Spring, Summer, Autumn, Winter or specific months"},{"label":"Region","name":"region","widget":"string","required":true},{"label":"Summary","name":"summary","widget":"string","required":true,"hint":"Short description for card display (80-120 characters)"},{"label":"Best Time","name":"best_time","widget":"string","required":true,"hint":"Most specific optimal viewing period"},{"label":"Cover Image","name":"image","widget":"image","required":true,"hint":"Main hero image for the seasonal destination"},{"label":"Featured","name":"featured","widget":"boolean","default":false,"hint":"Mark for homepage and featured sections"},{"label":"Detailed Description","name":"body","widget":"markdown","required":true,"hint":"Full detailed description with history, best practices, and travel tips"},{"label":"Must-See Features","name":"features","widget":"list","hint":"List of key attractions or viewing spots"},{"label":"Travel Tips","name":"travel_tips","widget":"list","hint":"Practical advice for visitors"}]},{"name":"resorts","label":"度假胜地","label_singular":"度假村","folder":"src/content/resorts","create":true,"slug":"{{slug}}","fields":[{"label":"Resort Name","name":"title","widget":"string","required":true},{"label":"Category","name":"category","widget":"string","required":true,"hint":"Beach, Mountain, Cultural, Spa, etc."},{"label":"Location","name":"location","widget":"string","required":true},{"label":"Summary","name":"summary","widget":"string","required":true,"hint":"Short description for card display (80-120 characters)"},{"label":"Best Season","name":"season","widget":"string","required":true,"hint":"Peak season or best time to visit"},{"label":"Cover Image","name":"image","widget":"image","required":true,"hint":"Main hero image for the resort"},{"label":"Featured","name":"featured","widget":"boolean","default":false,"hint":"Mark for homepage and featured sections"},{"label":"Detailed Description","name":"body","widget":"markdown","required":true,"hint":"Full detailed description with amenities, activities, and travel tips"},{"label":"Amenities","name":"amenities","widget":"list","hint":"List of resort facilities and services"},{"label":"Travel Tips","name":"travel_tips","widget":"list","hint":"Practical advice for visitors"}]},{"name":"stories","label":"旅行故事","label_singular":"故事","folder":"src/content/stories","create":true,"slug":"{{slug}}","fields":[{"label":"Story Title","name":"title","widget":"string","required":true},{"label":"City","name":"city","widget":"string","required":true},{"label":"Author","name":"author","widget":"string","required":true},{"label":"Date","name":"date","widget":"datetime","required":true},{"label":"Excerpt","name":"excerpt","widget":"text","required":true},{"label":"Cover Image","name":"image","widget":"image","required":true},{"label":"Featured","name":"featured","widget":"boolean","default":false},{"label":"Season","name":"season","widget":"string"},{"label":"Reading Time","name":"reading_time","widget":"number"},{"label":"Tags","name":"tags","widget":"list"},{"label":"Full Story","name":"body","widget":"markdown","required":true}]},{"name":"homepage","label":"首页配置","files":[{"label":"Hero Content","name":"hero","file":"src/content/homepage/hero.yaml","fields":[{"label":"Main Title","name":"title","widget":"string"},{"label":"Description","name":"description","widget":"string"},{"label":"Background Image","name":"image","widget":"image"}]},{"label":"Current Display Section","name":"current-display","file":"src/content/homepage/current-display.yaml","fields":[{"label":"Left Top Card","name":"left_top_card","widget":"relation","collection":"destinations","search_fields":["title"],"value_field":"title"},{"label":"Left Bottom Card","name":"left_bottom_card","widget":"relation","collection":"in-season","search_fields":["title"],"value_field":"title"},{"label":"Middle Top Card","name":"middle_top_card","widget":"relation","collection":"destinations","search_fields":["title"],"value_field":"title"},{"label":"Middle Bottom Card","name":"middle_bottom_card","widget":"relation","collection":"resorts","search_fields":["title"],"value_field":"title"},{"label":"Right Cards","name":"right_cards","widget":"list","field":{"label":"Card","name":"card","widget":"relation","collection":"stories","search_fields":["title"],"value_field":"title"}}]},{"label":"Scroll Sections","name":"scroll-sections","file":"src/content/homepage/scroll-sections.yaml","fields":[{"label":"Destinations Section","name":"destinations_section","widget":"relation","collection":"destinations","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"},{"label":"In Season Section","name":"in_season_section","widget":"relation","collection":"in-season","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"},{"label":"Resorts Section","name":"resorts_section","widget":"relation","collection":"resorts","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"},{"label":"Stories Section","name":"stories_section","widget":"relation","collection":"stories","multiple":true,"max":3,"search_fields":["title"],"value_field":"title"}]}]}]}</script> <!-- 自定义登录界面 --> <div id="auth-overlay" data-astro-cid-2zp6q64z> <div class="auth-box" data-astro-cid-2zp6q64z> <h2 data-astro-cid-2zp6q64z>Explore China Admin</h2> <p style="color:#666" data-astro-cid-2zp6q64z>请登录以管理网站内容</p> <button id="login-btn" class="btn" data-astro-cid-2zp6q64z>Login with GitHub</button> <div id="status-msg" class="status" data-astro-cid-2zp6q64z></div> </div> </div>  <script>
+    // 1. 检查是否已登录
+    const USER_KEY = 'netlify-cms-user';
+    const existingUser = localStorage.getItem(USER_KEY);
 
-      function showError(msg) {
-        console.error('CMS Error:', msg);
-        if (errorEl) {
-          errorEl.textContent = msg;
-          errorEl.style.display = 'block';
-        }
-        if (loadingEl) {
-          loadingEl.style.display = 'none';
-        }
-      }
+    if (!existingUser) {
+      // 🛑 未登录：显示覆盖层
+      const overlay = document.getElementById('auth-overlay');
+      const btn = document.getElementById('login-btn');
+      const status = document.getElementById('status-msg');
 
-      // 1. 读取配置
+      overlay.style.display = 'flex';
+
+      // 点击登录
+      btn.addEventListener('click', () => {
+        status.innerText = '正在打开 GitHub...';
+        const w = 600, h = 600;
+        const left = (window.innerWidth - w) / 2;
+        const top = (window.innerHeight - h) / 2;
+
+        // 打开我们的 API
+        window.open('/api/decap-cms-github', 'GitHubAuth', `width=${w},height=${h},top=${top},left=${left}`);
+      });
+
+      // 监听消息
+      window.addEventListener('message', (e) => {
+        if (typeof e.data === 'string' && e.data.startsWith('authorization:github:success:')) {
+          status.innerText = '认证成功！正在写入凭证...';
+          status.style.color = 'green';
+
+          try {
+            const data = JSON.parse(e.data.match(/success:(.+)/)[1]);
+
+            // ✅ 写入 Token
+            localStorage.setItem(USER_KEY, JSON.stringify({
+              token: data.token,
+              backendName: 'github'
+            }));
+
+            status.innerText = '登录完成！即将刷新...';
+
+            // 🔄 刷新页面进入后台
+            setTimeout(() => window.location.reload(), 1000);
+
+          } catch (err) {
+            console.error(err);
+            status.innerText = 'Token 解析失败';
+            status.style.color = 'red';
+          }
+        }
+      });
+    }
+
+    // 2. 初始化 CMS (无论是否登录都运行)
+    window.addEventListener('load', () => {
       const configEl = document.getElementById('cms-config');
-      if (!configEl) {
-        showError('错误：未找到 CMS 配置脚本 (#cms-config)。');
-        return;
-      }
-
-      let CONFIG;
-      try {
-        CONFIG = JSON.parse(configEl.textContent);
-        console.log('✅ CMS 配置解析成功');
-      } catch (e) {
-        showError('CMS 配置解析失败: ' + e.message);
-        return;
-      }
-
-      // 2. 确保 CMS 已加载（应已加载，因脚本在底部）
-      if (!window.CMS) {
-        showError('Decap CMS 库未加载，请检查网络或脚本标签。');
-        return;
-      }
-
-      // 3. 手动初始化
-      try {
-        CMS.init({ config: CONFIG });
-        console.log('✅ Decap CMS 初始化完成');
-
-        // 隐藏 loading
-        if (loadingEl) {
-          loadingEl.classList.add('hidden');
-          setTimeout(() => {
-            if (loadingEl) loadingEl.style.display = 'none';
-          }, 300);
-        }
-      } catch (e) {
-        showError('CMS 初始化失败: ' + (e.message || e.toString()));
+      if (window.CMS && configEl) {
+        const config = JSON.parse(configEl.textContent);
+        // 保持纯净配置，让 CMS 直连 GitHub
+        CMS.init({ config });
       }
     });
-  </script> <!-- ✅ 加载 Decap CMS 库（放在最后） -->  </body> </html>
+  </script> </body> </html>
