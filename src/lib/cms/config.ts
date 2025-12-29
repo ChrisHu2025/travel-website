@@ -4,8 +4,7 @@ export const cmsConfig = {
   backend: {
     name: 'github',
     repo: 'ChrisHu2025/travel-website',
-    branch: 'main',
-    use_state: false // ✅ 唯一修改点：改为 false 以关闭状态校验
+    branch: 'main'
   },
   site_url: 'https://explorechina.travel',
   display_url: 'https://explorechina.travel',

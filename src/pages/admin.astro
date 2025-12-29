@@ -4,6 +4,7 @@ import { cmsConfig } from '../lib/cms/config';
 
 export const prerender = true;
 
+// 序列化纯净配置
 const serializedConfig = JSON.stringify({
   ...cmsConfig,
   load_config_file: false
@@ -18,89 +19,122 @@ const serializedConfig = JSON.stringify({
   <title>Content Manager</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
   <style>
-    /* 简单的加载遮罩 */
-    #login-overlay {
-      position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999;
-      display: none; align-items: center; justify-content: center; flex-direction: column;
+    /* 🔴 自定义登录覆盖层 */
+    #custom-login-overlay {
+      position: fixed; inset: 0;
+      background-color: #f0f2f5;
+      z-index: 10000; /* 确保盖住 Decap CMS 的默认登录页 */
+      display: none; /* 默认隐藏，脚本判断需要登录时才显示 */
+      flex-direction: column; align-items: center; justify-content: center;
     }
-    .spinner {
-      border: 4px solid #f3f3f3; border-top: 4px solid #0070f3; border-radius: 50%;
-      width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;
+
+    .login-card {
+      background: white; padding: 40px; border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;
+      width: 300px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    h3 { color: #333; font-family: sans-serif; }
+
+    .login-btn {
+      background: #333; color: white; border: none; padding: 12px 24px;
+      font-size: 16px; border-radius: 5px; cursor: pointer; width: 100%;
+      font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background 0.2s;
+    }
+    .login-btn:hover { background: #000; }
+
+    h1 { margin-bottom: 20px; font-size: 24px; color: #333; }
+    p { color: #666; margin-bottom: 30px; font-size: 14px; }
   </style>
 </head>
 <body>
+  <!-- 挂载点 -->
   <div id="nc-root"></div>
+
+  <!-- 注入配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 登录中遮罩 -->
-  <div id="login-overlay">
-    <div class="spinner"></div>
-    <h3>认证成功！正在进入后台...</h3>
-    <p style="color:#666">如果长时间无反应，请刷新页面</p>
+  <!-- 🔴 自定义登录界面 -->
+  <div id="custom-login-overlay">
+    <div class="login-card">
+      <h1>Explore China CMS</h1>
+      <p>请使用 GitHub 账号登录以管理内容</p>
+      <button id="ver-login-btn" class="login-btn">
+        <svg height="24" viewBox="0 0 16 16" width="24" fill="white"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        Login with GitHub
+      </button>
+      <div id="login-status" style="margin-top:15px; font-size:12px; color:#666;"></div>
+    </div>
   </div>
-
-  <script is:inline>
-    // 1. 标记手动初始化
-    window.CMS_MANUAL_INIT = true;
-
-    // 2. 监听器：收到 Token -> Hash注入 -> 刷新
-    window.addEventListener('message', (event) => {
-      if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-
-        // 显示遮罩
-        document.getElementById('login-overlay').style.display = 'flex';
-        console.log('⚡️ 收到 Token');
-
-        try {
-          const jsonStr = event.data.match(/success:(.+)/)[1];
-          const data = JSON.parse(jsonStr);
-
-          if (data.token) {
-            // 🧹 清理旧的 LocalStorage，防止干扰
-            localStorage.removeItem('netlify-cms-user');
-
-            // 🔗 构造 Hash
-            const newHash = `#token=${data.token}`;
-            console.log('注入 Hash 并刷新:', newHash);
-
-            // 🔄 修改 Hash 并刷新
-            // Decap CMS 重启后会检测到这个 Hash 并自动登录
-            window.location.hash = newHash;
-            window.location.reload();
-          }
-        } catch (e) {
-          console.error(e);
-          alert('认证出错，请重试');
-          document.getElementById('login-overlay').style.display = 'none';
-        }
-      }
-    });
-  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
   <script is:inline>
-    // 3. 标准初始化
+    // 1. 检查登录状态
+    // Decap CMS 默认把 token 存在 'netlify-cms-user' 里
+    const user = localStorage.getItem('netlify-cms-user');
+
+    if (!user) {
+      // 🛑 未登录：显示我们的自定义覆盖层
+      const overlay = document.getElementById('custom-login-overlay');
+      overlay.style.display = 'flex';
+
+      // 绑定点击事件
+      document.getElementById('ver-login-btn').addEventListener('click', () => {
+        const status = document.getElementById('login-status');
+        status.innerText = '正在打开授权窗口...';
+
+        // 打开我们的 API 弹窗
+        // 注意：这里直接调用你的 API 路由
+        const width = 600, height = 600;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+        window.open(
+          '/api/decap-cms-github',
+          'GitHubAuth',
+          `width=${width},height=${height},top=${top},left=${left}`
+        );
+      });
+
+      // 监听消息
+      window.addEventListener('message', (event) => {
+        if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
+          const status = document.getElementById('login-status');
+          status.innerText = '认证成功！正在跳转...';
+          status.style.color = 'green';
+
+          try {
+            const jsonStr = event.data.match(/success:(.+)/)[1];
+            const data = JSON.parse(jsonStr);
+
+            if (data.token) {
+              // ✅ 手动写入 Token (模仿 Decap CMS 的存储格式)
+              const userData = {
+                token: data.token,
+                backendName: 'github'
+              };
+              localStorage.setItem('netlify-cms-user', JSON.stringify(userData));
+
+              // 🔄 刷新页面
+              // 刷新后，上面的 if(!user) 将为假，Overlay 不会显示，CMS 将读取 Token 并正常加载
+              window.location.reload();
+            }
+          } catch (e) {
+            console.error(e);
+            alert('登录失败，请重试');
+          }
+        }
+      });
+    }
+
+    // 2. 初始化 CMS
+    // 无论是否登录都执行，如果未登录，CMS 会在底部渲染自己的登录页（被我们的 Overlay 盖住）
+    // 如果已登录，CMS 会直接进入 Dashboard
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-      if (!window.CMS) return;
-
-      try {
+      if (window.CMS && configEl) {
         const config = JSON.parse(configEl.textContent);
-
-        // ✅ 始终注入 base_url
-        // 这样无论是在登录页还是后台，配置都是指向你的 Vercel API
-        config.backend.base_url = window.location.origin;
-        config.backend.auth_endpoint = '/api/decap-cms-github';
-
-        console.log('🚀 CMS Init (Base URL injected)');
+        // 不注入任何 base_url，保持纯净
         CMS.init({ config });
-
-      } catch (e) {
-        console.error('Init Error:', e);
       }
     });
   </script>
