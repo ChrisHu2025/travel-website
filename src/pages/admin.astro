@@ -79,10 +79,8 @@ const serializedConfig = JSON.stringify({
   <!-- ✅ 防止 Astro 添加 data-astro-cid -->
   <div id="nc-root" is:inline></div>
 
-  <!-- ✅ 配置脚本注入 -->
-  <script id="cms-config" is:inline>
-    {serializedConfig}
-  </script>
+  <!-- ✅ 配置脚本注入 (关键修改：使用 set:html 和 type="application/json") -->
+  <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
   <!-- ✅ Loading UI -->
   <div class="cms-loading" id="js-loading">
@@ -127,6 +125,7 @@ const serializedConfig = JSON.stringify({
       let CONFIG;
       try {
         if (!configEl) throw new Error('未找到配置脚本 #cms-config');
+        // textContent 可以正确获取 JSON 内容
         CONFIG = JSON.parse(configEl.textContent || configEl.innerText);
         console.log('✅ CMS 配置解析成功');
       } catch (e) {
@@ -141,7 +140,6 @@ const serializedConfig = JSON.stringify({
 
         // 成功后隐藏 loading
         if (loadingEl) {
-          // 稍微延迟一下以确保 UI 渲染完成
           setTimeout(() => {
             loadingEl.classList.add('hidden');
             setTimeout(() => {
