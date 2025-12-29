@@ -2,39 +2,49 @@
 export const prerender = false;
 
 export async function GET({ request }) {
-  const BASE_URL = 'https://explorechina.travel';
+  // ✅ 1. 动态获取当前请求的 Origin（协议+域名）
+  // 无论用户访问的是 www.explorechina.travel 还是 explorechina.travel
+  // 这里都会自动获取正确的域名，确保回调地址匹配
+  const reqUrl = new URL(request.url);
+  const BASE_URL = reqUrl.origin;
   const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
-  const SCOPE = 'public_repo';
 
+  const SCOPE = 'public_repo'; // 私有库请改为 'repo'
   const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
   const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
 
+  // 检查环境变量
   if (!CLIENT_ID || !CLIENT_SECRET) {
-    return new Response('Server config error', { status: 500 });
+    return new Response('Server config error: Missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET', { status: 500 });
   }
 
-  const url = new URL(request.url);
-  const code = url.searchParams.get('code');
+  const code = reqUrl.searchParams.get('code');
 
+  // === 阶段一：无 code，重定向到 GitHub ===
   if (!code) {
-    // 1. 重定向到 GitHub
     const githubAuthUrl = new URL('https://github.com/login/oauth/authorize');
     githubAuthUrl.searchParams.set('client_id', CLIENT_ID);
     githubAuthUrl.searchParams.set('redirect_uri', AUTH_ENDPOINT);
     githubAuthUrl.searchParams.set('scope', SCOPE);
-    // ❌ 不发送 state，因为 config 中 use_state: false
+    // 注意：我们依然不发送 state，配合 config 中的 use_state: false
 
     return new Response(null, {
       status: 302,
-      headers: { Location: githubAuthUrl.toString() }
+      headers: {
+        Location: githubAuthUrl.toString(),
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
     });
   }
 
+  // === 阶段二：有 code，换取 Token ===
   try {
-    // 2. 换取 Token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
       body: JSON.stringify({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
@@ -46,52 +56,38 @@ export async function GET({ request }) {
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
-      return new Response(`Error: ${JSON.stringify(tokenData)}`, { status: 403 });
+      return new Response(`Error: ${JSON.stringify(tokenData)}`, {
+        status: 403,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
     }
 
-    // 3. 返回 HTML
+    // === 阶段三：返回标准握手脚本 ===
     const token = tokenData.access_token;
     const provider = 'github';
 
+    // ✅ 构建标准 postMessage 响应
+    // 这里的 window.opener.postMessage 会将消息发回给主页面
+    // window.location.origin 确保消息只发给当前域名（安全且动态）
     const responseHtml = `
       <!DOCTYPE html>
       <html>
-      <head><title>Auth Success</title></head>
-      <body style="background:#f0f0f0; font-family:sans-serif; text-align:center; padding-top:50px;">
-        <h2 style="color:green;">登录成功!</h2>
-        <p>正在与主窗口通信...</p>
-        <p style="font-size:12px; color:#999;">Token: ${token.substring(0, 5)}... (Hidden)</p>
-        <script>
-          (function() {
-            const data = JSON.stringify({ token: "${token}", provider: "${provider}" });
-            const message = "authorization:${provider}:success:" + data;
+      <body>
+      <script>
+        (function() {
+          const message = 'authorization:${provider}:success:${JSON.stringify({ token: token, provider: provider })}';
 
-            console.log("📤 [Popup] 准备发送消息:", message);
-
-            if (window.opener) {
-              // 发送消息
-              window.opener.postMessage(message, "*");
-              console.log("📤 [Popup] 消息已发送!");
-
-              // ⏳ 保持窗口打开 2 秒，让用户能看清，也确保消息送达
-              setTimeout(() => {
-                console.log("👋 [Popup] 关闭窗口");
-                window.close();
-              }, 2000);
-            } else {
-              document.body.innerHTML += "<p style='color:red'>错误：找不到父窗口 (window.opener is null)。请确保您是从 admin 页面点击打开的。</p>";
-            }
-          })();
-        </script>
+          // 发送消息给父窗口
+          if (window.opener) {
+            window.opener.postMessage(message, window.location.origin);
+            window.close();
+          } else {
+            document.body.innerText = "Error: Cannot communicate with parent window.";
+          }
+        })();
+      </script>
       </body>
       </html>
     `;
 
     return new Response(responseHtml, {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
-    });
-  } catch (err) {
-    return new Response('Internal Server Error', { status: 500 });
-  }
-}

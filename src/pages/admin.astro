@@ -16,101 +16,51 @@ const serializedConfig = JSON.stringify({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Explore China CMS</title>
+  <title>Content Management</title>
+  <!-- 引入官方脚本和样式 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
-  <style>
-    body { font-family: -apple-system, system-ui, sans-serif; background: #eee; margin: 0; }
-    #custom-loading {
-      position: fixed; inset: 0; background: white; z-index: 10000;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .spinner {
-      width: 40px; height: 40px; border: 4px solid #f3f3f3;
-      border-top: 4px solid #0070f3; border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .status-text { margin-top: 15px; color: #666; font-size: 14px; }
-  </style>
 </head>
 <body>
+  <!-- 挂载点 -->
   <div id="nc-root"></div>
 
+  <!-- 1. 注入原始配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <div id="custom-loading">
-    <div class="spinner"></div>
-    <div class="status-text" id="status-msg">正在初始化系统...</div>
-  </div>
+  <!-- 2. 设置手动初始化 -->
+  <script is:inline>window.CMS_MANUAL_INIT = true;</script>
 
-  <script is:inline>
-    // 1. 标记手动初始化
-    window.CMS_MANUAL_INIT = true;
-
-    // 2. 监听 Token 消息
-    window.addEventListener('message', (event) => {
-      if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-        const msg = document.getElementById('status-msg');
-        msg.textContent = '认证成功！正在注入凭证...';
-        msg.style.color = 'green';
-
-        try {
-          const jsonStr = event.data.match(/success:(.+)/)[1];
-          const data = JSON.parse(jsonStr);
-
-          if (data.token) {
-            console.log('🚀 [Auth] Token 捕获成功，执行 Hash 注入跳转');
-
-            // 🛑 核心修改：不再依赖 LocalStorage
-            // 直接构造带 token 的 URL Hash
-            // Decap CMS 启动时会自动检测 #token=... 并登录
-            const newHash = '#token=' + data.token;
-
-            // 强制修改 URL Hash
-            window.location.hash = newHash;
-
-            // 稍等片刻让浏览器应用 Hash，然后刷新
-            setTimeout(() => {
-              window.location.reload();
-            }, 100);
-          }
-        } catch (e) {
-          console.error('解析错误:', e);
-          alert('认证失败，请重试');
-        }
-      }
-    });
-  </script>
-
+  <!-- 3. 加载 CMS 库 -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
+  <!-- 4. 标准初始化 (Standard Init) -->
   <script is:inline>
-    // 3. 初始化 CMS
+    // 确保在 window load 后执行，避免 race condition
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-      const loading = document.getElementById('custom-loading');
 
-      if (!window.CMS) return;
+      if (!window.CMS) {
+        console.error('CMS library not loaded');
+        return;
+      }
 
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // 动态设置 base_url (解决域名匹配问题)
+        // ✅✅✅ 官方标准做法：动态注入当前 Origin ✅✅✅
+        // 这确保了 Config 中的 base_url 与 API 的 Origin 100% 一致
+        // 从而通过 Decap CMS 内部的安全校验
         config.backend.base_url = window.location.origin;
+        config.backend.auth_endpoint = '/api/decap-cms-github';
 
-        console.log('🚀 CMS Init...');
+        console.log('✅ Initializing CMS with Standard Config');
+        console.log('Base URL:', config.backend.base_url);
+
         CMS.init({ config });
 
-        // CMS 加载后隐藏 loading
-        // 如果 URL 里已经有 #token=...，CMS 会自动处理登录
-        setTimeout(() => {
-           // 只有当 CMS 真正挂载 UI 后才隐藏
-           // 简单的判断：如果页面上有登录按钮或者面板
-           loading.style.display = 'none';
-        }, 1000);
-
       } catch (e) {
-        console.error('Init Error:', e);
+        console.error('Configuration Error:', e);
+        document.body.innerHTML = '<p style="padding:20px;color:red">配置初始化失败，请刷新重试。</p>';
       }
     });
   </script>
