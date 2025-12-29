@@ -4,7 +4,7 @@ import { cmsConfig } from '../lib/cms/config';
 
 export const prerender = true;
 
-// 序列化配置为内联 JSON
+// 序列化配置
 const serializedConfig = JSON.stringify({
   ...cmsConfig,
   load_config_file: false
@@ -16,117 +16,53 @@ const serializedConfig = JSON.stringify({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>内容管理系统 - Explore China</title>
+  <title>Content Manager</title>
+  <!-- 引入官方样式 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
-  <style>
-    body { margin: 0; background: #f5f5f5; font-family: -apple-system, sans-serif; }
-    .cms-loading {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: white; z-index: 9999;
-    }
-    .loading-spinner {
-      width: 40px; height: 40px;
-      border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
-      border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text { color: #666; font-size: 16px; }
-  </style>
 </head>
 <body>
-  <div id="nc-root" is:inline></div>
+  <div id="nc-root"></div>
 
-  <!-- ✅ 1. 注入配置 -->
+  <!-- 1. 注入原始配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- ✅ 2. Loading 界面 -->
-  <div class="cms-loading" id="js-loading">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">正在初始化内容管理系统...</div>
-  </div>
-
-  <!-- ✅ 3. 核心修复：手动捕获 Token 并强制登录 -->
+  <!-- 2. 设置手动初始化标志 -->
   <script is:inline>
     window.CMS_MANUAL_INIT = true;
-
-    window.addEventListener('message', (event) => {
-      // 检查是否是 GitHub 认证消息
-      if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-        console.log('⚡️ [Force Login] 捕获到 Token，准备强制写入存储...');
-
-        try {
-          const jsonStr = event.data.match(/success:(.+)/)[1];
-          const data = JSON.parse(jsonStr);
-
-          if (data.token) {
-            // 构造 Decap CMS 需要的用户对象
-            const userObj = {
-              token: data.token,
-              backendName: 'github' // 必须与 config.backend.name 一致
-            };
-
-            // 🔐 强制写入 LocalStorage
-            // Decap CMS 启动时会检查这个 Key，如果有值，就认为已登录
-            const key = 'netlify-cms-user';
-            localStorage.setItem(key, JSON.stringify(userObj));
-
-            console.log('✅ Token 已写入 LocalStorage，准备刷新进入后台...');
-
-            // 更新 UI 提示
-            const loadingEl = document.getElementById('js-loading');
-            if (loadingEl) {
-              loadingEl.innerHTML = `
-                <div style="text-align:center">
-                  <h3 style="color:#2ecc71; margin-bottom:10px;">认证成功！</h3>
-                  <p style="color:#666;">正在跳转到后台...</p>
-                </div>
-              `;
-              loadingEl.style.display = 'flex';
-            }
-
-            // 🔄 1秒后刷新页面，让 CMS 读取刚刚写入的 Token
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          }
-        } catch (e) {
-          console.error('❌ 强制登录失败:', e);
-          alert('登录过程中发生未知错误，请查看控制台。');
-        }
-      }
-    });
   </script>
 
-  <!-- ✅ 4. 加载 Decap CMS -->
-  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js" defer></script>
+  <!-- 3. 加载 CMS 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
-  <!-- ✅ 5. 初始化脚本 -->
+  <!-- 4. 标准初始化脚本 (关键修正：动态 base_url) -->
   <script is:inline>
-    window.addEventListener('load', function () {
-      const loadingEl = document.getElementById('js-loading');
+    // 确保 DOM 和 CMS 库都已加载
+    function initCMS() {
       const configEl = document.getElementById('cms-config');
-
-      if (!window.CMS) return;
+      if (!window.CMS || !configEl) return;
 
       try {
-        const CONFIG = JSON.parse(configEl.textContent);
+        const config = JSON.parse(configEl.textContent);
 
-        // 只有当 LocalStorage 里没有 Token 时，CMS 才会显示登录页
-        // 否则它会直接进入 Dashboard
-        CMS.init({ config: CONFIG });
+        // ✅✅✅ 关键修正：将 base_url 强制设为当前页面的 Origin ✅✅✅
+        // 这样无论你是 www、非www、还是 localhost，Decap CMS 都会认为 API 是“自己人”
+        config.backend.base_url = window.location.origin;
 
-        // 稍微延时隐藏 loading，避免闪烁
-        setTimeout(() => {
-          // 如果当前是登录页（URL没有hash或hash是登录相关），隐藏loading显示登录按钮
-          // 如果已登录，CMS 会自己接管界面
-          if (loadingEl) loadingEl.style.display = 'none';
-        }, 500);
+        console.log('🚀 初始化 CMS, Base URL:', config.backend.base_url);
 
+        CMS.init({ config });
       } catch (e) {
-        console.error('CMS Init Error:', e);
+        console.error('CMS Init Failed:', e);
+        document.body.innerHTML = '<p style="color:red;padding:20px">配置错误: ' + e.message + '</p>';
       }
-    });
+    }
+
+    // 监听脚本加载完成
+    if (document.readyState === 'complete') {
+      initCMS();
+    } else {
+      window.addEventListener('load', initCMS);
+    }
   </script>
 </body>
 </html>
