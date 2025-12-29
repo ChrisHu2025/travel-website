@@ -4,6 +4,7 @@ import { cmsConfig } from '../lib/cms/config';
 
 export const prerender = true;
 
+// 序列化配置
 const serializedConfig = JSON.stringify({
   ...cmsConfig,
   load_config_file: false
@@ -15,135 +16,49 @@ const serializedConfig = JSON.stringify({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Explore China CMS - 诊断模式</title>
+  <title>Content Management</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
-  <style>
-    body { margin: 0; background: #f0f2f5; font-family: monospace; }
-
-    /* 诊断面板样式 */
-    #debug-panel {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.98); z-index: 20000;
-      display: none; /* 默认隐藏，触发时显示 */
-      flex-direction: column; align-items: center; justify-content: center;
-      padding: 20px; box-sizing: border-box;
-    }
-
-    .log-box {
-      width: 80%; max-width: 600px; height: 300px;
-      background: #1e1e1e; color: #00ff00;
-      padding: 15px; border-radius: 8px; overflow-y: auto;
-      margin-bottom: 20px; border: 1px solid #333;
-      white-space: pre-wrap; font-size: 13px;
-    }
-
-    .action-btn {
-      padding: 15px 40px; font-size: 18px; font-weight: bold;
-      color: white; background: #0070f3; border: none; border-radius: 5px;
-      cursor: pointer; box-shadow: 0 4px 10px rgba(0,112,243,0.3);
-      transition: transform 0.1s;
-    }
-    .action-btn:active { transform: scale(0.98); }
-
-    h2 { color: #333; font-family: sans-serif; }
-  </style>
 </head>
 <body>
+  <!-- 挂载点 -->
   <div id="nc-root"></div>
+
+  <!-- 1. 注入原始配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 诊断面板 -->
-  <div id="debug-panel">
-    <h2>🔐 认证诊断模式</h2>
-    <div class="log-box" id="screen-log">等待认证消息...</div>
-    <button class="action-btn" id="enter-btn" style="display:none" onclick="window.location.reload()">
-      ✅ 进入后台 (Reload)
-    </button>
-  </div>
+  <!-- 2. 设置手动初始化 -->
+  <script is:inline>window.CMS_MANUAL_INIT = true;</script>
 
-  <script is:inline>
-    // 1. 设置标记
-    window.CMS_MANUAL_INIT = true;
-
-    // 2. 屏幕日志函数
-    function logToScreen(msg) {
-      const box = document.getElementById('screen-log');
-      const time = new Date().toLocaleTimeString();
-      box.innerHTML += `[${time}] ${msg}\n`;
-      box.scrollTop = box.scrollHeight;
-      console.log(msg); // 同时也打到控制台
-    }
-
-    // 3. 监听消息
-    window.addEventListener('message', (event) => {
-      if (typeof event.data === 'string' && event.data.startsWith('authorization:github:success:')) {
-
-        // 显示面板
-        document.getElementById('debug-panel').style.display = 'flex';
-        logToScreen('📨 收到 GitHub 消息！');
-
-        try {
-          const jsonStr = event.data.match(/success:(.+)/)[1];
-          const data = JSON.parse(jsonStr);
-
-          if (data.token) {
-            logToScreen(`🔑 Token 捕获成功 (长度: ${data.token.length})`);
-
-            // --- 关键操作 A: 写入 LocalStorage ---
-            // 这是最核心的登录凭证
-            const userObj = {
-              token: data.token,
-              backendName: 'github' // 必须匹配 config 中的 backend.name
-            };
-            localStorage.setItem('netlify-cms-user', JSON.stringify(userObj));
-            logToScreen(`💾 已写入 LocalStorage: netlify-cms-user`);
-            logToScreen(`📄 内容预览: ${JSON.stringify(userObj).substring(0, 40)}...`);
-
-            // --- 关键操作 B: 注入 URL Hash ---
-            // 作为双重保险
-            const newHash = `#token=${data.token}`;
-            window.location.hash = newHash;
-            logToScreen(`🔗 已注入 URL Hash: #token=...`);
-
-            // --- 关键操作 C: 显示按钮 ---
-            logToScreen('✅ 准备就绪！请点击下方按钮进入后台。');
-            document.getElementById('enter-btn').style.display = 'block';
-
-          } else {
-            logToScreen('❌ 错误: 数据中没有 Token');
-          }
-        } catch (e) {
-          logToScreen(`❌ 异常: ${e.message}`);
-        }
-      }
-    });
-  </script>
-
+  <!-- 3. 加载 CMS 库 -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
+  <!-- 4. 标准初始化 (Standard Init) -->
   <script is:inline>
-    // 4. 初始化 CMS
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-      if (!window.CMS) return;
+
+      if (!window.CMS) {
+        console.error('CMS library not loaded');
+        return;
+      }
 
       try {
         const config = JSON.parse(configEl.textContent);
 
-        // 动态设置 base_url
+        // ✅✅✅ 核心逻辑：动态注入当前域名 ✅✅✅
+        // 这告诉 CMS："去当前域名的 /api/decap-cms-github 进行认证"
+        // 这样可以完美解决 www 和 non-www 的匹配问题
         config.backend.base_url = window.location.origin;
         config.backend.auth_endpoint = '/api/decap-cms-github';
 
-        // 检查本地存储状态
-        const existingUser = localStorage.getItem('netlify-cms-user');
-        if (existingUser) {
-           console.log('检测到现有登录会话');
-        }
+        console.log('🚀 Initializing CMS...');
+        console.log('Backend:', config.backend);
 
         CMS.init({ config });
 
       } catch (e) {
-        console.error('Init Error:', e);
+        console.error('Configuration Error:', e);
+        document.body.innerHTML = '<p style="padding:20px;color:red">配置初始化失败，请检查控制台。</p>';
       }
     });
   </script>

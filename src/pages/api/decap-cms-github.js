@@ -2,17 +2,20 @@
 export const prerender = false;
 
 export async function GET({ request }) {
-  // 动态获取当前请求的 Origin
+  // 1. 动态获取当前请求的 Origin
   const reqUrl = new URL(request.url);
   const BASE_URL = reqUrl.origin;
   const AUTH_ENDPOINT = `${BASE_URL}/api/decap-cms-github`;
 
-  const SCOPE = 'public_repo';
+  // 🔴 关键修改：使用 'repo' 权限
+  // 'public_repo' 可能导致 CMS 无法正确读取仓库信息，从而导致登录后卡死
+  const SCOPE = 'repo';
+
   const CLIENT_ID = import.meta.env.GITHUB_CLIENT_ID;
   const CLIENT_SECRET = import.meta.env.GITHUB_CLIENT_SECRET;
 
   if (!CLIENT_ID || !CLIENT_SECRET) {
-    return new Response('Server config error', { status: 500 });
+    return new Response('Server config error: Missing Client ID/Secret', { status: 500 });
   }
 
   const code = reqUrl.searchParams.get('code');
@@ -52,34 +55,28 @@ export async function GET({ request }) {
     const tokenData = await tokenResponse.json();
 
     if (tokenData.error) {
-      return new Response(`Error: ${JSON.stringify(tokenData)}`, {
-        status: 403,
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      });
+      return new Response(`Error: ${JSON.stringify(tokenData)}`, { status: 403 });
     }
 
-    // === 阶段三：返回握手脚本 ===
+    // === 阶段三：返回标准握手脚本 ===
     const token = tokenData.access_token;
     const provider = 'github';
-    // 构造数据字符串
-    const data = JSON.stringify({ token: token, provider: provider });
 
+    // ✅ 标准通信脚本
     const responseHtml = `
       <!DOCTYPE html>
       <html>
       <body>
       <script>
         (function() {
-          const message = 'authorization:${provider}:success:${data}';
-
+          const msg = JSON.stringify({
+            token: "${token}",
+            provider: "${provider}"
+          });
+          // 使用 "*" 确保消息能跨子域发送 (如 www -> non-www)
           if (window.opener) {
-            // ✅✅✅ 关键修改：使用 "*" 允许跨子域通信 ✅✅✅
-            // 解决 www 与 non-www 导致的消息被浏览器拦截问题
-            window.opener.postMessage(message, "*");
-
+            window.opener.postMessage("authorization:${provider}:success:" + msg, "*");
             window.close();
-          } else {
-            document.body.innerText = "Error: Cannot communicate with parent window.";
           }
         })();
       </script>
@@ -89,13 +86,10 @@ export async function GET({ request }) {
 
     return new Response(responseHtml, {
       status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-      }
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
   } catch (err) {
-    console.error('Auth API Error:', err);
+    console.error(err);
     return new Response('Internal Server Error', { status: 500 });
   }
 }
