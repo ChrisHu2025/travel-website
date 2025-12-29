@@ -14,14 +14,14 @@ const leftCards = [
   featuredInSeason[0] || { image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=Jiuzhaigou+Autumn', title: 'Jiuzhaigou Autumn', summary: 'Golden forests reflecting in turquoise lakes' }
 ];
 
-const middleTopCard = featuredDestinations[1] || { 
+const middleTopCard = featuredDestinations[1] || {
   image: 'https://via.placeholder.com/600x450/6366f1/ffffff?text=Hero+Destination',
   title: 'Discover China\'s Hidden Gems',
   summary: 'Explore the most authentic and breathtaking destinations across China',
   season: 'All Seasons'
 };
 
-const middleBottomCard = featuredResorts[0] || { 
+const middleBottomCard = featuredResorts[0] || {
   image: 'https://via.placeholder.com/400x300/6366f1/ffffff?text=Sanya+Yalong+Bay',
   title: 'Sanya Yalong Bay',
   summary: '7-kilometer white sand beach with luxury resorts and crystal-clear waters',
@@ -52,9 +52,9 @@ const storiesSection = featuredStories.slice(0, 3);
           {leftCards.map((card, index) => (
             <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-1 overflow-hidden">
               <div class="aspect-[4/3] overflow-hidden">
-                <img 
-                  src={card.data?.image || card.image} 
-                  alt={card.data?.title || card.title} 
+                <img
+                  src={card.data?.image || card.image}
+                  alt={card.data?.title || card.title}
                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
@@ -65,15 +65,15 @@ const storiesSection = featuredStories.slice(0, 3);
             </div>
           ))}
         </div>
-        
+
         <!-- 中间50%区域 - 2个卡片，高度2:1 (4:3比例) -->
         <div class="flex flex-col space-y-5">
           <!-- 中上大卡片 (2/3高度) -->
           <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-2 overflow-hidden">
             <div class="aspect-[4/3] overflow-hidden">
-              <img 
-                src={middleTopCard.data?.image || middleTopCard.image} 
-                alt={middleTopCard.data?.title || middleTopCard.title} 
+              <img
+                src={middleTopCard.data?.image || middleTopCard.image}
+                alt={middleTopCard.data?.title || middleTopCard.title}
                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>
@@ -95,13 +95,13 @@ const storiesSection = featuredStories.slice(0, 3);
               </a>
             </div>
           </div>
-          
+
           <!-- 中下小卡片 (1/3高度) - 标题和简介在图片左侧 -->
           <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-1 flex">
             <div class="w-1/2 aspect-[4/3] overflow-hidden">
-              <img 
-                src={middleBottomCard.data?.image || middleBottomCard.image} 
-                alt={middleBottomCard.data?.title || middleBottomCard.title} 
+              <img
+                src={middleBottomCard.data?.image || middleBottomCard.image}
+                alt={middleBottomCard.data?.title || middleBottomCard.title}
                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>
@@ -116,15 +116,15 @@ const storiesSection = featuredStories.slice(0, 3);
             </div>
           </div>
         </div>
-        
+
         <!-- 右侧25%区域 - 4个上下排列的相同尺寸卡片 (4:3比例) -->
         <div class="flex flex-col space-y-3">
           {rightCards.map((card, index) => (
             <div class="group rounded-xl shadow-md bg-white border border-gray-100 flex-1 overflow-hidden">
               <div class="aspect-[4/3] overflow-hidden">
-                <img 
-                  src={card.data?.image || card.image} 
-                  alt={card.data?.title || card.title} 
+                <img
+                  src={card.data?.image || card.image}
+                  alt={card.data?.title || card.title}
                   class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
@@ -157,9 +157,9 @@ const storiesSection = featuredStories.slice(0, 3);
             {destinationsSection.map((destination, index) => (
               <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
                 <div class="h-64 overflow-hidden">
-                  <img 
-                    src={destination.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+destination.data.title} 
-                    alt={destination.data.title} 
+                  <img
+                    src={destination.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+destination.data.title}
+                    alt={destination.data.title}
                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
@@ -188,7 +188,7 @@ const storiesSection = featuredStories.slice(0, 3);
             </a>
           </div>
         </div>
-        
+
         <!-- In Season板块 -->
         <div class="mb-16">
           <div class="flex justify-between items-center mb-8">
@@ -198,9 +198,9 @@ const storiesSection = featuredStories.slice(0, 3);
             {inSeasonSection.map((season, index) => (
               <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
                 <div class="h-64 overflow-hidden">
-                  <img 
-                    src={season.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+season.data.title} 
-                    alt={season.data.title} 
+                  <img
+                    src={season.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+season.data.title}
+                    alt={season.data.title}
                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
@@ -229,7 +229,7 @@ const storiesSection = featuredStories.slice(0, 3);
             </a>
           </div>
         </div>
-        
+
         <!-- Resorts & Getaways板块 -->
         <div class="mb-16">
           <div class="flex flex-col items-center mb-10">
@@ -241,9 +241,9 @@ const storiesSection = featuredStories.slice(0, 3);
             {resortsSection.map((resort, index) => (
               <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
                 <div class="h-64 overflow-hidden">
-                  <img 
-                    src={resort.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+resort.data.title} 
-                    alt={resort.data.title} 
+                  <img
+                    src={resort.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+resort.data.title}
+                    alt={resort.data.title}
                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
@@ -272,7 +272,7 @@ const storiesSection = featuredStories.slice(0, 3);
             </a>
           </div>
         </div>
-        
+
         <!-- Travel Stories板块 -->
         <div>
           <div class="flex justify-between items-center mb-8">
@@ -282,9 +282,9 @@ const storiesSection = featuredStories.slice(0, 3);
             {storiesSection.map((story, index) => (
               <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
                 <div class="h-64 overflow-hidden">
-                  <img 
-                    src={story.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+story.data.title} 
-                    alt={story.data.title} 
+                  <img
+                    src={story.data.image || 'https://via.placeholder.com/800x600/6366f1/ffffff?text='+story.data.title}
+                    alt={story.data.title}
                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
