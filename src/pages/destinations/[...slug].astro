@@ -1,0 +1,86 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('destinations');
+  // 核心：使用 path 字段作为路由
+  return entries.map(entry => ({
+    params: { slug: entry.data.path },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+// 页面标题
+const pageTitle = entry.data.title ? `${entry.data.title} - Explore China` : 'Content Not Found';
+---
+
+<Layout title={pageTitle}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 三级页面大图区域 -->
+    <section class="relative h-[60vh] md:h-[70vh]">
+      <div class="absolute inset-0">
+        <img
+          src={entry.data.image}
+          alt={entry.data.title}
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+      </div>
+      <div class="container mx-auto px-4 h-full flex flex-col justify-end">
+        <div class="max-w-4xl pb-12 md:pb-20">
+          <div class="flex flex-wrap items-center text-white text-sm mb-4">
+             <!-- 面包屑导航 -->
+             <a href="/destinations" class="hover:text-indigo-300 transition-colors">Destinations</a>
+             <span class="mx-2">•</span>
+             <a href={`/destinations/${entry.data.city.toLowerCase()}`} class="hover:text-indigo-300 transition-colors">{entry.data.city}</a>
+          </div>
+          <h1 class="text-3xl md:text-5xl font-serif font-bold text-white max-w-3xl leading-tight">
+            {entry.data.title}
+          </h1>
+          <p class="text-xl text-gray-200 mt-4 max-w-3xl">{entry.data.summary}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 正文内容区域 -->
+    <section class="py-16 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto prose prose-lg">
+          <!-- 内容顶部信息 -->
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
+            <div>
+              <h2 class="text-2xl font-serif font-bold text-gray-900 mb-3">
+                {entry.data.card_title || 'Overview'}
+              </h2>
+              <p class="text-gray-700 text-lg">{entry.data.card_summary}</p>
+            </div>
+          </div>
+
+          <!-- 主要 Markdown 内容渲染 -->
+          <div class="space-y-12 text-gray-700">
+             <Content />
+          </div>
+
+          <!-- 实用信息卡片 (使用 Frontmatter 数据) -->
+          <div class="mt-16 bg-indigo-50 rounded-2xl p-8 border border-indigo-100">
+            <h3 class="text-xl font-serif font-bold text-indigo-900 mb-6">Travel Essentials</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-bold text-gray-800 mb-2">Best Season</h4>
+                <p class="text-gray-600">{entry.data.best_season.join(', ')}</p>
+              </div>
+              <div>
+                <h4 class="font-bold text-gray-800 mb-2">Location</h4>
+                <p class="text-gray-600">{entry.data.city}, {entry.data.region}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>

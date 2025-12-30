@@ -1,0 +1,64 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allStories = await getCollection('stories');
+  // 提取所有城市并去重 (忽略大小写)
+  const cities = [...new Set(allStories.map(s => s.data.city.toLowerCase()))];
+
+  return cities.map(city => {
+    // 过滤出该城市的故事
+    const filtered = allStories.filter(s => s.data.city.toLowerCase() === city);
+    return {
+      params: { city },
+      props: {
+        cityDisplayName: filtered[0].data.city,
+        posts: filtered
+      },
+    };
+  });
+}
+
+const { cityDisplayName, posts } = Astro.props;
+---
+
+<Layout title={`Travel Stories in ${cityDisplayName}`}>
+  <div class="min-h-screen bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+      <div class="mb-12">
+        <a href="/stories" class="text-sm text-indigo-600 hover:underline mb-2 inline-block">← Back to All Stories</a>
+        <h1 class="text-4xl font-serif font-bold text-gray-900">Stories from {cityDisplayName}</h1>
+        <p class="text-gray-600 mt-2">Discover {posts.length} experience(s)</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {posts.map((item) => (
+          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
+            <div class="h-56 overflow-hidden">
+              <img
+                src={item.data.image}
+                alt={item.data.title}
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-serif font-bold text-gray-900 mb-3">
+                {item.data.card_title || item.data.title}
+              </h3>
+              <p class="text-gray-600 mb-4 line-clamp-3 text-sm">
+                {item.data.card_summary}
+              </p>
+              <a href={`/stories/${item.data.path}/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                Read Story
+                <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</Layout>

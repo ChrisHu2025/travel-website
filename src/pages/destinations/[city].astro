@@ -1,0 +1,64 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allDestinations = await getCollection('destinations');
+  // 提取唯一城市
+  const cities = [...new Set(allDestinations.map(d => d.data.city.toLowerCase()))];
+
+  return cities.map(city => {
+    // 筛选该城市的文章
+    const filtered = allDestinations.filter(d => d.data.city.toLowerCase() === city);
+    return {
+      params: { city },
+      // 传递原始 city 字符串（首字母大写等）以便显示
+      props: {
+        cityDisplayName: filtered[0].data.city,
+        posts: filtered
+      },
+    };
+  });
+}
+
+const { cityDisplayName, posts } = Astro.props;
+---
+
+<Layout title={`Destinations in ${cityDisplayName}`}>
+  <div class="min-h-screen bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-between items-end mb-12">
+        <div>
+           <a href="/destinations" class="text-sm text-indigo-600 hover:underline mb-2 inline-block">← Back to All Regions</a>
+           <h1 class="text-4xl font-serif font-bold text-gray-900">Exploring {cityDisplayName}</h1>
+           <p class="text-gray-600 mt-2">Found {posts.length} attraction(s)</p>
+        </div>
+      </div>
+
+      <!-- 复用你的 Grid 卡片设计 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {posts.map((item) => (
+          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
+            <div class="h-48 overflow-hidden">
+              <img
+                src={item.data.image}
+                alt={item.data.title}
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div class="p-5">
+              <h3 class="text-lg font-serif font-bold text-gray-900 mb-2">{item.data.title}</h3>
+              <p class="text-gray-600 mb-4 line-clamp-2 text-sm">{item.data.card_summary}</p>
+              <a href={`/destinations/${item.data.path}/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
+                Read More
+                <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+</Layout>
