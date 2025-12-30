@@ -1,178 +1,50 @@
 ---
-import Layout from '@layouts/Layout.astro';
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
 
-// 季节性景点数据
-const seasonalDestinations = [
-  { 
-    id: 'jiuzhaigou-autumn', 
-    name: 'Jiuzhaigou in Autumn', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Jiuzhaigou+Autumn',
-    summary: 'Golden forests reflecting in turquoise lakes, China\'s most colorful autumn destination',
-    featured: true,
-    mainFeature: 'Five Flower Lake',
-    season: 'September-October'
-  },
-  { 
-    id: 'harbin-winter', 
-    name: 'Harbin Ice Festival', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Harbin+Ice+Festival',
-    summary: 'World\'s largest ice and snow sculpture festival with illuminated ice castles',
-    featured: true,
-    mainFeature: 'Ice Castle Square',
-    season: 'January-February'
-  },
-  { 
-    id: 'wuyuan-spring', 
-    name: 'Wuyuan Rapeseed Flowers', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Wuyuan+Spring',
-    summary: 'Sea of golden rapeseed flowers covering ancient Huizhou villages',
-    featured: false,
-    mainFeature: 'Jiangling Terrace',
-    season: 'March-April'
-  },
-  { 
-    id: 'beidaihe-summer', 
-    name: 'Beidaihe Beach', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Beidaihe+Summer',
-    summary: 'China\'s premier summer beach resort with pine forests and golden sands',
-    featured: false,
-    mainFeature: 'Eagle\'s Corner Beach',
-    season: 'June-August'
-  },
-  { 
-    id: 'kanas-autumn', 
-    name: 'Kanas Golden Autumn', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Kanas+Autumn',
-    summary: 'Turquoise lake surrounded by golden birch forests in Xinjiang\'s Altay Mountains',
-    featured: false,
-    mainFeature: 'Kanas Lake',
-    season: 'September-October'
-  },
-  { 
-    id: 'guilin-spring', 
-    name: 'Guilin Misty Spring', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Guilin+Spring',
-    summary: 'Karst mountains emerging from morning mist along the Li River',
-    featured: false,
-    mainFeature: 'Yangshuo Countryside',
-    season: 'April-May'
-  },
-  { 
-    id: 'zhangjiajie-autumn', 
-    name: 'Zhangjiajie Autumn Colors', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Zhangjiajie+Autumn',
-    summary: 'Avatar mountains draped in autumn foliage with hiking trails and glass bridges',
-    featured: false,
-    mainFeature: 'Avatar Hallelujah Mountain',
-    season: 'October-November'
-  }
-];
-
-// 按相同逻辑分配数据
-const featuredDestination = seasonalDestinations.find(dest => dest.featured) || seasonalDestinations[0];
-const rightDestinations = seasonalDestinations.filter(dest => dest !== featuredDestination).slice(0, 2);
-const gridDestinations = seasonalDestinations.filter(dest => dest !== featuredDestination && !rightDestinations.includes(dest));
+const allSeason = await getCollection('in-season');
 ---
 
-<Layout title="In Season - Explore China">
-  <div class="min-h-screen bg-gray-50">
-    <!-- 当前页大布局 -->
-    <section class="py-12 container mx-auto px-4">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- 左侧大卡片 (2/3区域) -->
-        <div class="lg:col-span-2">
-          <div class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 h-[500px]">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
-            <img 
-              src={featuredDestination.image} 
-              alt={featuredDestination.name} 
-              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div class="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
-              <span class="inline-block px-4 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
-                {featuredDestination.season}
-              </span>
-              <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
-                {featuredDestination.name}
-              </h2>
-              <p class="text-lg opacity-90 mb-6 max-w-2xl">
-                {featuredDestination.summary}
-              </p>
-              <a href={`/in-season/${featuredDestination.id}/detail/`} class="inline-flex items-center text-white font-medium text-lg group/btn">
-                Discover {featuredDestination.name}
-                <svg class="ml-2 w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 右侧中卡片 (1/3区域) -->
-        <div class="space-y-8">
-          {rightDestinations.map((destination, index) => (
-            <div class="group relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow h-64" key={index}>
-              <img 
-                src={destination.image} 
-                alt={destination.name} 
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
-                <h3 class="text-xl font-serif font-bold">{destination.name}</h3>
-                <p class="text-gray-200 mt-2 text-sm">{destination.mainFeature}</p>
-                <a href={`/in-season/${destination.id}/detail/`} class="mt-3 inline-block text-indigo-300 hover:text-white transition-colors font-medium text-sm">
-                  Explore {destination.name} →
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+<Layout title="In Season Recommendations">
+  <div class="min-h-screen bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <span class="text-indigo-600 font-bold tracking-wider uppercase">Travel Guide</span>
+        <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mt-2 mb-6">Best In Season</h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            Curated destinations that are perfect for visiting right now.
+        </p>
       </div>
-    </section>
 
-    <!-- 下滑页小卡片区域 -->
-    <section class="py-16 bg-gray-50">
-      <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-12">
-          <h2 class="text-3xl font-serif font-bold text-gray-900">
-            More Seasonal Destinations
-          </h2>
-          <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
-            View All Destinations
-            <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </a>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {gridDestinations.map((destination, index) => (
-            <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group" key={index}>
-              <div class="h-48 overflow-hidden">
-                <img 
-                  src={destination.image} 
-                  alt={destination.name} 
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div class="p-5">
-                <div class="flex items-center text-sm text-gray-500 mb-3">
-                  <span>{destination.season}</span>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {allSeason.map((item) => (
+          <a href={`/in-season/${item.data.path}/`} class="group block relative h-96 rounded-2xl overflow-hidden shadow-lg">
+            <img
+                src={item.data.image}
+                alt={item.data.title}
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+
+            <div class="absolute bottom-0 left-0 p-8 w-full">
+                <div class="mb-2">
+                    <span class="px-3 py-1 bg-white/20 backdrop-blur text-white text-xs rounded-full">
+                        {item.data.best_season[0]}
+                    </span>
                 </div>
-                <h3 class="text-lg font-serif font-bold text-gray-900 mb-2">{destination.name}</h3>
-                <p class="text-gray-600 mb-4 line-clamp-2">{destination.summary}</p>
-                <a href={`/in-season/${destination.id}/detail/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
-                  Discover
-                  <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
+                <h3 class="text-2xl font-serif font-bold text-white mb-2 leading-tight group-hover:text-indigo-200 transition-colors">
+                    {item.data.card_title || item.data.title}
+                </h3>
+                <p class="text-gray-300 text-sm line-clamp-2 mb-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                    {item.data.card_summary}
+                </p>
+                <span class="text-white text-sm font-medium border-b border-transparent group-hover:border-white transition-all">
+                    Discover More →
+                </span>
+            </div>
+          </a>
+        ))}
       </div>
-    </section>
+    </div>
   </div>
 </Layout>

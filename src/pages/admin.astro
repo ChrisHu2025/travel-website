@@ -14,107 +14,47 @@ const serializedConfig = JSON.stringify({
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
+
+  <!-- ✅ 1. 引入 Netlify Identity 脚本 (必须) -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
-  <style>
-    /* 覆盖层：未登录时显示 */
-    #auth-overlay {
-      position: fixed; inset: 0; z-index: 10000;
-      background: #f4f6f8;
-      display: none; /* JS 控制显示 */
-      flex-direction: column; align-items: center; justify-content: center;
-    }
-    .auth-box {
-      background: white; padding: 40px; border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
-      width: 320px;
-    }
-    .btn {
-      background: #24292e; color: white; border: none; padding: 12px;
-      width: 100%; border-radius: 6px; font-size: 16px; font-weight: 600;
-      cursor: pointer; transition: 0.2s; margin-top: 20px;
-    }
-    .btn:hover { background: #000; }
-    .status { margin-top: 15px; font-size: 13px; color: #666; min-height: 20px;}
-  </style>
 </head>
 <body>
   <div id="nc-root"></div>
+
+  <!-- 注入配置 -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 自定义登录界面 -->
-  <div id="auth-overlay">
-    <div class="auth-box">
-      <h2>Explore China Admin</h2>
-      <p style="color:#666">请登录以管理网站内容</p>
+  <!-- 2. 手动初始化标记 -->
+  <script is:inline>window.CMS_MANUAL_INIT = true;</script>
 
-      <button id="login-btn" class="btn">Login with GitHub</button>
-      <div id="status-msg" class="status"></div>
-    </div>
-  </div>
-
+  <!-- 3. 加载 CMS 核心 -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
+  <!-- 4. 初始化脚本 -->
   <script is:inline>
-    // 1. 检查是否已登录
-    const USER_KEY = 'netlify-cms-user';
-    const existingUser = localStorage.getItem(USER_KEY);
-
-    if (!existingUser) {
-      // 🛑 未登录：显示覆盖层
-      const overlay = document.getElementById('auth-overlay');
-      const btn = document.getElementById('login-btn');
-      const status = document.getElementById('status-msg');
-
-      overlay.style.display = 'flex';
-
-      // 点击登录
-      btn.addEventListener('click', () => {
-        status.innerText = '正在打开 GitHub...';
-        const w = 600, h = 600;
-        const left = (window.innerWidth - w) / 2;
-        const top = (window.innerHeight - h) / 2;
-
-        // 打开我们的 API
-        window.open('/api/decap-cms-github', 'GitHubAuth', `width=${w},height=${h},top=${top},left=${left}`);
-      });
-
-      // 监听消息
-      window.addEventListener('message', (e) => {
-        if (typeof e.data === 'string' && e.data.startsWith('authorization:github:success:')) {
-          status.innerText = '认证成功！正在写入凭证...';
-          status.style.color = 'green';
-
-          try {
-            const data = JSON.parse(e.data.match(/success:(.+)/)[1]);
-
-            // ✅ 写入 Token
-            localStorage.setItem(USER_KEY, JSON.stringify({
-              token: data.token,
-              backendName: 'github'
-            }));
-
-            status.innerText = '登录完成！即将刷新...';
-
-            // 🔄 刷新页面进入后台
-            setTimeout(() => window.location.reload(), 1000);
-
-          } catch (err) {
-            console.error(err);
-            status.innerText = 'Token 解析失败';
-            status.style.color = 'red';
-          }
-        }
-      });
-    }
-
-    // 2. 初始化 CMS (无论是否登录都运行)
-    window.addEventListener('load', () => {
+    window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-      if (window.CMS && configEl) {
-        const config = JSON.parse(configEl.textContent);
-        // 保持纯净配置，让 CMS 直连 GitHub
-        CMS.init({ config });
+      if (!window.CMS) return;
+
+      const config = JSON.parse(configEl.textContent);
+
+      // Netlify 模式下不需要动态注入 base_url，直接初始化即可
+      CMS.init({ config });
+
+      // ✅ 5. 监听 Netlify Identity 登录事件
+      // 这一步确保登录后自动刷新页面进入 CMS 后台，而不需要手动刷新
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+          if (!user) {
+            window.netlifyIdentity.on("login", () => {
+              document.location.reload();
+            });
+          }
+        });
       }
     });
   </script>

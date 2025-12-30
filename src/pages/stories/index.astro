@@ -1,177 +1,86 @@
 ---
-import Layout from '@layouts/Layout.astro';
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
 
-// 城市数据（与DESTINATIONS板块相同）
-const cities = [
-  { 
-    id: 'beijing', 
-    name: 'Beijing Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Beijing+Stories',
-    summary: 'Imperial history, ancient temples, and modern narratives',
-    featured: true,
-    mainStory: 'Forbidden City Secrets',
-    season: 'All Seasons'
-  },
-  { 
-    id: 'shanghai', 
-    name: 'Shanghai Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Shanghai+Stories',
-    summary: 'Colonial history, skyscrapers, and street life tales',
-    featured: true,
-    mainStory: 'The Bund at Night',
-    season: 'Spring, Autumn'
-  },
-  { 
-    id: 'chengdu', 
-    name: 'Chengdu Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Chengdu+Stories',
-    summary: 'Panda encounters, spicy cuisine, and tea house culture',
-    featured: false,
-    mainStory: 'Panda Base Adventure',
-    season: 'Spring, Summer'
-  },
-  { 
-    id: 'xian', 
-    name: 'Xi\'an Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Xian+Stories',
-    summary: 'Terracotta warriors, ancient walls, and Silk Road tales',
-    featured: false,
-    mainStory: 'Terracotta Army Discovery',
-    season: 'Spring, Autumn'
-  },
-  { 
-    id: 'guilin', 
-    name: 'Guilin Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Guilin+Stories',
-    summary: 'Karst mountains, Li River cruises, and ethnic minority culture',
-    featured: false,
-    mainStory: 'Li River Journey',
-    season: 'Spring, Summer'
-  },
-  { 
-    id: 'hangzhou', 
-    name: 'Hangzhou Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Hangzhou+Stories',
-    summary: 'West Lake poetry, tea plantations, and Song Dynasty history',
-    featured: false,
-    mainStory: 'West Lake at Dawn',
-    season: 'Spring, Autumn'
-  },
-  { 
-    id: 'suzhou', 
-    name: 'Suzhou Stories', 
-    image: 'https://via.placeholder.com/1200x800/6366f1/ffffff?text=Suzhou+Stories',
-    summary: 'Classical gardens, canals, and silk road heritage',
-    featured: false,
-    mainStory: 'Master of Nets Garden',
-    season: 'Spring, Autumn'
-  }
-];
+// 1. 获取数据
+const allStories = await getCollection('stories');
 
-// 按相同逻辑分配数据
-const featuredCity = cities.find(city => city.featured) || cities[0];
-const rightCities = cities.filter(city => city !== featuredCity).slice(0, 2);
-const gridCities = cities.filter(city => city !== featuredCity && !rightCities.includes(city));
+// 2. 简单的逻辑：提取第一篇作为 Featured，其余作为列表
+const featuredStory = allStories.find(s => s.data.featured) || allStories[0];
+const otherStories = allStories.filter(s => s.id !== featuredStory.id);
+
+// 3. 提取所有出现的城市用于筛选链接
+const cities = [...new Set(allStories.map(s => s.data.city))];
 ---
 
 <Layout title="Travel Stories - Explore China">
   <div class="min-h-screen bg-gray-50">
-    <!-- 当前页大布局 -->
+    <!-- Hero 区域 -->
     <section class="py-12 container mx-auto px-4">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- 左侧大卡片 (2/3区域) -->
-        <div class="lg:col-span-2">
-          <div class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 h-[500px]">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
-            <img 
-              src={featuredCity.image} 
-              alt={featuredCity.name} 
-              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div class="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
-              <span class="inline-block px-4 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
-                {featuredCity.season}
-              </span>
-              <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
-                {featuredCity.name}
-              </h2>
-              <p class="text-lg opacity-90 mb-6 max-w-2xl">
-                {featuredCity.summary}
-              </p>
-              <a href={`/stories/${featuredCity.id}/`} class="inline-flex items-center text-white font-medium text-lg group/btn">
-                Read {featuredCity.name}
-                <svg class="ml-2 w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 右侧中卡片 (1/3区域) -->
-        <div class="space-y-8">
-          {rightCities.map((city, index) => (
-            <div class="group relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow h-64" key={index}>
-              <img 
-                src={city.image} 
-                alt={city.name} 
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
-                <h3 class="text-xl font-serif font-bold">{city.name}</h3>
-                <p class="text-gray-200 mt-2 text-sm">{city.mainStory}</p>
-                <a href={`/stories/${city.id}/`} class="mt-3 inline-block text-indigo-300 hover:text-white transition-colors font-medium text-sm">
-                  Read Stories →
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div class="flex flex-wrap gap-4 justify-center mb-8">
+        <span class="text-gray-500 font-medium self-center">Browse by City:</span>
+        {cities.map(city => (
+           <a href={`/stories/${city.toLowerCase()}`} class="px-3 py-1 bg-white border rounded-full text-sm text-indigo-600 hover:bg-indigo-50 transition-colors">{city}</a>
+        ))}
       </div>
-    </section>
 
-    <!-- 下滑页小卡片区域 -->
-    <section class="py-16 bg-gray-50">
-      <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-12">
-          <h2 class="text-3xl font-serif font-bold text-gray-900">
-            More Chinese Stories
+      <!-- Featured Story -->
+      <div class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 h-[500px] mb-12">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
+        <img
+          src={featuredStory.data.image}
+          alt={featuredStory.data.title}
+          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div class="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
+          <span class="inline-block px-4 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
+            Featured Story
+          </span>
+          <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
+            {featuredStory.data.title}
           </h2>
-          <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center group">
-            View All Cities
-            <svg class="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <p class="text-lg opacity-90 mb-6 max-w-2xl">
+            {featuredStory.data.summary}
+          </p>
+          <a href={`/stories/${featuredStory.data.path}/`} class="inline-flex items-center text-white font-medium text-lg group/btn">
+            Read Full Story
+            <svg class="ml-2 w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
             </svg>
           </a>
         </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {gridCities.map((city, index) => (
-            <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group" key={index}>
-              <div class="h-48 overflow-hidden">
-                <img 
-                  src={city.image} 
-                  alt={city.name} 
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+      </div>
+
+      <!-- Story Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {otherStories.map((item) => (
+          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group flex flex-col h-full">
+            <div class="h-56 overflow-hidden">
+              <img
+                src={item.data.image}
+                alt={item.data.title}
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div class="p-6 flex flex-col flex-grow">
+              <div class="flex items-center text-sm text-gray-500 mb-3">
+                <span class="text-indigo-600 font-medium">{item.data.city}</span>
+                <span class="mx-2">•</span>
+                <span>{item.data.region}</span>
               </div>
-              <div class="p-5">
-                <div class="flex items-center text-sm text-gray-500 mb-3">
-                  <span>{city.season}</span>
-                </div>
-                <h3 class="text-lg font-serif font-bold text-gray-900 mb-2">{city.name}</h3>
-                <p class="text-gray-600 mb-4 line-clamp-2">{city.summary}</p>
-                <a href={`/stories/${city.id}/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
-                  Discover Stories
-                  <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </a>
+              <h3 class="text-xl font-serif font-bold text-gray-900 mb-3 group-hover:text-indigo-700 transition-colors">
+                <a href={`/stories/${item.data.path}/`}>{item.data.card_title || item.data.title}</a>
+              </h3>
+              <p class="text-gray-600 mb-4 line-clamp-3 text-sm flex-grow">
+                {item.data.card_summary}
+              </p>
+              <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                 <span class="text-xs text-gray-400">Best Season: {item.data.best_season[0]}</span>
+                 <a href={`/stories/${item.data.path}/`} class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">Read →</a>
               </div>
-            </article>
-          ))}
-        </div>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   </div>

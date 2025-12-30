@@ -1,77 +1,65 @@
-import { defineCollection } from 'astro:content';
-import { z } from 'astro/zod';
+// src/content/config.ts
+import { defineCollection, z } from 'astro:content';
 
-// 基础schema - 所有集合共享
-const baseSchema = z.object({
+// 1. 定义区域枚举 (Single Source of Truth)
+const REGIONS = [
+  'North China',
+  'Northeast China',
+  'East China',
+  'Central China',
+  'South China',
+  'Southwest China',
+  'Northwest China',
+  'Hong Kong, Macau & Taiwan'
+] as const;
+
+// 2. 定义通用数据模型 (Unified Schema)
+// 适用于 destinations, in-season, resorts, stories
+const commonSchema = z.object({
   title: z.string(),
-  image: z.string().url(),
+  region: z.enum(REGIONS),
+  city: z.string(),
+  // 必须是数组，例如 ["Spring (Mar-May)", "Autumn (Sep-Nov)"]
+  best_season: z.array(z.string()),
+  card_title: z.string().max(50, 'Card title too long'), // 稍微放宽一点限制用于测试
+  card_summary: z.string(),
   summary: z.string(),
-  body: z.string().optional(),
-  featured: z.boolean().optional(),
-  tags: z.array(z.string()).optional(),
-  date: z.coerce.date().optional(),
-  author: z.string().optional(),
-  author_bio: z.string().optional(),
-  introduction: z.string().optional(),
-  introduction_title: z.string().optional(),
-  best_time: z.string().optional(),
-  getting_there: z.string().optional(),
-  local_tips: z.string().optional(),
-  cultural_notes: z.string().optional(),
-  subtitle: z.string().optional()
+  image: z.string(),
+  featured: z.boolean().default(false),
+  // 核心逻辑字段：URL 路径
+  path: z
+    .string()
+    .regex(
+      /^[a-z0-9-]+\/[a-z0-9-]+$/,
+      "Path must be in format 'city/slug' (e.g. beijing/forbidden-city)"
+    )
 });
 
-// destinations: 需要 region, city, season
-const destinationsSchema = baseSchema.extend({
-  region: z.string(),
-  city: z.string(),
-  season: z.string()
-});
-
-// stories: 需要 city, author, date, excerpt
-const storiesSchema = baseSchema.extend({
-  city: z.string(),
-  author: z.string(),
-  date: z.coerce.date(),
-  excerpt: z.string()
-});
-
-// in-season: 需要 season, region
-const inSeasonSchema = baseSchema.extend({
-  season: z.string(),
-  region: z.string()
-});
-
-// resorts: 需要 category, location
-const resortsSchema = baseSchema.extend({
-  category: z.string(),
-  location: z.string()
-});
-
-// 定义集合 - 使用新版API
+// 3. 应用 Schema 到各个集合
 const destinations = defineCollection({
   type: 'content',
-  schema: destinationsSchema
-});
-
-const stories = defineCollection({
-  type: 'content',
-  schema: storiesSchema
+  schema: commonSchema
 });
 
 const inSeason = defineCollection({
   type: 'content',
-  schema: inSeasonSchema
+  schema: commonSchema
 });
 
 const resorts = defineCollection({
   type: 'content',
-  schema: resortsSchema
+  schema: commonSchema
 });
 
+const stories = defineCollection({
+  type: 'content',
+  schema: commonSchema
+});
+
+// 4. 导出集合
 export const collections = {
   destinations,
-  stories,
   'in-season': inSeason,
-  resorts
+  resorts,
+  stories
 };
