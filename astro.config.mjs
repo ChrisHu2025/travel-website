@@ -1,20 +1,26 @@
 // astro.config.mjs
+import netlify from '@astrojs/netlify';
 import tailwind from '@astrojs/tailwind';
-import vercel from '@astrojs/vercel/serverless';
 import { defineConfig } from 'astro/config';
 import { resolve } from 'path';
 
 export default defineConfig({
   site: 'https://explorechina.travel',
+
+  // ✅ 确保这里没有 react()，除非你明确在 .astro 文件中使用了 React 组件
+  // 如果之前报错涉及 React 版本冲突，且你只在 admin 中用 CDN 加载 CMS，这里不加 react() 是最安全的
   integrations: [tailwind()],
-  adapter: vercel({
-    // ✅ 关键修复：显式指定 Vercel 支持的运行时
-    runtime: 'nodejs20.x' // 或 'nodejs18.x' → 但必须用字符串形式且 Vercel 认可
-  }),
+
+  // ✅ 关键：使用 Netlify 适配器
+  adapter: netlify(),
+
+  // Netlify 支持 hybrid (混合渲染) 和 server (SSR)
   output: 'hybrid',
+
   experimental: {
     contentLayer: true
   },
+
   vite: {
     resolve: {
       alias: {
