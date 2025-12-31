@@ -1,5 +1,8 @@
 ---
 import '../styles/global.css';
+
+// 接收页面传入的标题
+const { title = "Explore China" } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -8,8 +11,15 @@ import '../styles/global.css';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <title>Explore China - Authentic Travel Experiences</title>
+
+  <!-- 使用动态标题 -->
+  <title>{title}</title>
+
   <meta name="description" content="Discover authentic travel experiences and practical guides across China" />
+
+  <!-- ✅ 1. 引入 Netlify Identity Widget (关键修改) -->
+  <!-- 这允许在网站的任何页面处理登录邀请链接 -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body class="min-h-screen flex flex-col bg-gray-50">
   <header class="bg-white shadow-sm sticky top-0 z-50">
@@ -106,5 +116,19 @@ import '../styles/global.css';
     </div>
   </footer>
 
+  <!-- ✅ 2. 添加登录重定向逻辑 (关键修改) -->
+  <script is:inline>
+    // 这里的逻辑是：如果检测到 Netlify Identity Widget 且用户正在尝试登录
+    // 它会将用户重定向到 /admin 页面，从而弹出密码设置/登录对话框
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on("init", user => {
+        if (!user) {
+          window.netlifyIdentity.on("login", () => {
+            document.location.href = "/admin/";
+          });
+        }
+      });
+    }
+  </script>
 </body>
 </html>
