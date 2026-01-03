@@ -1,5 +1,7 @@
 // src/lib/cms/config.ts
 
+// 1. 定义标准区域 (Single Source of Truth)
+// GEO Note: 固定枚举值有助于 AI 建立清晰的地理实体关系
 export const REGIONS = [
   'North China',
   'Northeast China',
@@ -11,20 +13,39 @@ export const REGIONS = [
   'Hong Kong, Macau & Taiwan'
 ] as const;
 
-export type Region = (typeof REGIONS)[number];
+// 2. 定义标准季节 (Fixed Options)
+// GEO Note: 包含具体的月份说明，有助于 AI 精准匹配时间相关的搜索意图
+export const SEASONS = [
+  'Spring (Mar-May)',
+  'Summer (Jun-Aug)',
+  'Autumn (Sep-Nov)',
+  'Winter (Dec-Feb)',
+  'All Year'
+] as const;
 
 export const cmsConfig = {
-  // ✅ 关键修改：使用 Netlify 专属的 git-gateway
+  // Netlify Identity + Git Gateway 标准配置
   backend: {
     name: 'git-gateway',
     branch: 'main'
   },
+
+  // 站点基础信息
   site_url: 'https://explorechina.travel',
   display_url: 'https://explorechina.travel',
+
+  // 图片存储配置
+  // Decap CMS 会将上传的图片存入 GitHub 的这个目录
   media_folder: 'public/images/uploads',
+  // Decap CMS 会在 Markdown 前端数据中写入这个路径
   public_folder: '/images/uploads',
+
   load_config_file: false,
+
   collections: [
+    // ---------------------------------------------------------
+    // 1. Destinations (目的地)
+    // ---------------------------------------------------------
     {
       name: 'destinations',
       label: 'Destinations',
@@ -36,13 +57,21 @@ export const cmsConfig = {
         { label: 'Title', name: 'title', widget: 'string', required: true },
         { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
         { label: 'City', name: 'city', widget: 'string', required: true },
-        { label: 'Best Season', name: 'best_season', widget: 'list', required: true }, // 注意：之前建议改为list支持多选
+        // ✅ 修改：多选下拉菜单，确保数据结构化
+        {
+          label: 'Best Season',
+          name: 'best_season',
+          widget: 'select',
+          multiple: true,
+          options: SEASONS,
+          required: true,
+          hint: 'Select all seasons that apply.'
+        },
         { label: 'Card Title', name: 'card_title', widget: 'string', required: true },
         { label: 'Card Summary', name: 'card_summary', widget: 'text', required: true },
         { label: 'Summary', name: 'summary', widget: 'text', required: true },
         { label: 'Cover Image', name: 'image', widget: 'image', required: true },
         { label: 'Featured', name: 'featured', widget: 'boolean', default: false },
-        // ✅ 核心逻辑字段
         {
           label: 'Path (URL)',
           name: 'path',
@@ -53,6 +82,10 @@ export const cmsConfig = {
         { label: 'Content', name: 'body', widget: 'markdown', required: true }
       ]
     },
+
+    // ---------------------------------------------------------
+    // 2. In-Season (当季推荐)
+    // ---------------------------------------------------------
     {
       name: 'in-season',
       label: 'In-Season',
@@ -64,7 +97,15 @@ export const cmsConfig = {
         { label: 'Title', name: 'title', widget: 'string', required: true },
         { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
         { label: 'City', name: 'city', widget: 'string', required: true },
-        { label: 'Best Season', name: 'best_season', widget: 'list', required: true },
+        // ✅ 修改：使用统一常量
+        {
+          label: 'Best Season',
+          name: 'best_season',
+          widget: 'select',
+          multiple: true,
+          options: SEASONS,
+          required: true
+        },
         { label: 'Card Title', name: 'card_title', widget: 'string', required: true },
         { label: 'Card Summary', name: 'card_summary', widget: 'text', required: true },
         { label: 'Summary', name: 'summary', widget: 'text', required: true },
@@ -74,6 +115,10 @@ export const cmsConfig = {
         { label: 'Content', name: 'body', widget: 'markdown', required: true }
       ]
     },
+
+    // ---------------------------------------------------------
+    // 3. Resorts (度假胜地)
+    // ---------------------------------------------------------
     {
       name: 'resorts',
       label: 'Resorts',
@@ -85,7 +130,22 @@ export const cmsConfig = {
         { label: 'Title', name: 'title', widget: 'string', required: true },
         { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
         { label: 'City', name: 'city', widget: 'string', required: true },
-        { label: 'Best Season', name: 'best_season', widget: 'list', required: true },
+        {
+          label: 'Category',
+          name: 'category',
+          widget: 'select',
+          options: ['Beach', 'Mountain', 'Urban', 'Desert', 'Cultural'],
+          default: 'Beach'
+        },
+        // ✅ 修改：使用统一常量
+        {
+          label: 'Best Season',
+          name: 'best_season',
+          widget: 'select',
+          multiple: true,
+          options: SEASONS,
+          required: true
+        },
         { label: 'Card Title', name: 'card_title', widget: 'string', required: true },
         { label: 'Card Summary', name: 'card_summary', widget: 'text', required: true },
         { label: 'Summary', name: 'summary', widget: 'text', required: true },
@@ -95,6 +155,10 @@ export const cmsConfig = {
         { label: 'Content', name: 'body', widget: 'markdown', required: true }
       ]
     },
+
+    // ---------------------------------------------------------
+    // 4. Stories (旅行故事)
+    // ---------------------------------------------------------
     {
       name: 'stories',
       label: 'Stories',
@@ -106,7 +170,15 @@ export const cmsConfig = {
         { label: 'Title', name: 'title', widget: 'string', required: true },
         { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
         { label: 'City', name: 'city', widget: 'string', required: true },
-        { label: 'Best Season', name: 'best_season', widget: 'list', required: true },
+        // ✅ 修改：使用统一常量
+        {
+          label: 'Best Season',
+          name: 'best_season',
+          widget: 'select',
+          multiple: true,
+          options: SEASONS,
+          required: true
+        },
         { label: 'Card Title', name: 'card_title', widget: 'string', required: true },
         { label: 'Card Summary', name: 'card_summary', widget: 'text', required: true },
         { label: 'Summary', name: 'summary', widget: 'text', required: true },
@@ -118,6 +190,10 @@ export const cmsConfig = {
         { label: 'Content', name: 'body', widget: 'markdown', required: true }
       ]
     },
+
+    // ---------------------------------------------------------
+    // 5. Homepage Configuration
+    // ---------------------------------------------------------
     {
       name: 'homepage',
       label: 'Homepage',
@@ -137,7 +213,6 @@ export const cmsConfig = {
           name: 'current-display',
           file: 'src/content/homepage/current-display.yaml',
           fields: [
-            // 这里的 relation 引用是基于文件名(slug)的，这没问题，Decap CMS 内部会处理
             {
               label: 'Left Top Card',
               name: 'left_top_card',
@@ -190,6 +265,8 @@ export const cmsConfig = {
             }
           ]
         }
+        // GEO Note: Removed 'Scroll Sections' to simplify homepage for now based on your previous request to simplify
+        // If you need it back, you can add it here.
       ]
     }
   ]
