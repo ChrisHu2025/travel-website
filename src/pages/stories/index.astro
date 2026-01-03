@@ -2,86 +2,38 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
-// 1. 获取数据
 const allStories = await getCollection('stories');
-
-// 2. 简单的逻辑：提取第一篇作为 Featured，其余作为列表
-const featuredStory = allStories.find(s => s.data.featured) || allStories[0];
-const otherStories = allStories.filter(s => s.id !== featuredStory.id);
-
-// 3. 提取所有出现的城市用于筛选链接
-const cities = [...new Set(allStories.map(s => s.data.city))];
+const sortedStories = allStories.sort((a, b) => new Date(b.data.date).valueOf() - new Date(a.data.date).valueOf());
 ---
 
 <Layout title="Travel Stories - Explore China">
-  <div class="min-h-screen bg-gray-50">
-    <!-- Hero 区域 -->
-    <section class="py-12 container mx-auto px-4">
-      <div class="flex flex-wrap gap-4 justify-center mb-8">
-        <span class="text-gray-500 font-medium self-center">Browse by City:</span>
-        {cities.map(city => (
-           <a href={`/stories/${city.toLowerCase()}`} class="px-3 py-1 bg-white border rounded-full text-sm text-indigo-600 hover:bg-indigo-50 transition-colors">{city}</a>
-        ))}
-      </div>
+  <div class="min-h-screen bg-white py-16">
+    <div class="container mx-auto px-4">
+      <header class="text-center mb-24">
+        <h1 class="text-5xl md:text-7xl font-serif font-bold text-gray-900 mb-6 tracking-tight">Stories</h1>
+        <p class="text-xl text-gray-500 font-serif italic max-w-2xl mx-auto">First-hand accounts from the road.</p>
+      </header>
 
-      <!-- Featured Story -->
-      <div class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 h-[500px] mb-12">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
-        <img
-          src={featuredStory.data.image}
-          alt={featuredStory.data.title}
-          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-        <div class="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
-          <span class="inline-block px-4 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
-            Featured Story
-          </span>
-          <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
-            {featuredStory.data.title}
-          </h2>
-          <p class="text-lg opacity-90 mb-6 max-w-2xl">
-            {featuredStory.data.summary}
-          </p>
-          <a href={`/stories/${featuredStory.data.path}/`} class="inline-flex items-center text-white font-medium text-lg group/btn">
-            Read Full Story
-            <svg class="ml-2 w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </a>
-        </div>
-      </div>
-
-      <!-- Story Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {otherStories.map((item) => (
-          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group flex flex-col h-full">
-            <div class="h-56 overflow-hidden">
-              <img
-                src={item.data.image}
-                alt={item.data.title}
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <div class="p-6 flex flex-col flex-grow">
-              <div class="flex items-center text-sm text-gray-500 mb-3">
-                <span class="text-indigo-600 font-medium">{item.data.city}</span>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+        {sortedStories.map((item) => (
+          <article class="group flex flex-col h-full">
+            <a href={`/stories/${item.data.path}/`} class="block mb-6 overflow-hidden aspect-[4/3] bg-gray-100">
+              <img src={item.data.image} alt={item.data.title} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            </a>
+            <div class="flex-grow">
+              <div class="flex items-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                <span class="text-indigo-600">{item.data.city}</span>
                 <span class="mx-2">•</span>
-                <span>{item.data.region}</span>
+                <time>{new Date(item.data.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</time>
               </div>
-              <h3 class="text-xl font-serif font-bold text-gray-900 mb-3 group-hover:text-indigo-700 transition-colors">
-                <a href={`/stories/${item.data.path}/`}>{item.data.card_title || item.data.title}</a>
+              <h3 class="text-2xl font-serif font-bold text-gray-900 mb-3 leading-tight group-hover:text-gray-600 transition-colors">
+                <a href={`/stories/${item.data.path}/`}>{item.data.card_title}</a>
               </h3>
-              <p class="text-gray-600 mb-4 line-clamp-3 text-sm flex-grow">
-                {item.data.card_summary}
-              </p>
-              <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
-                 <span class="text-xs text-gray-400">Best Season: {item.data.best_season[0]}</span>
-                 <a href={`/stories/${item.data.path}/`} class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">Read →</a>
-              </div>
+              <p class="text-gray-500 text-sm leading-relaxed line-clamp-3 font-sans">{item.data.card_summary}</p>
             </div>
           </article>
         ))}
       </div>
-    </section>
+    </div>
   </div>
 </Layout>

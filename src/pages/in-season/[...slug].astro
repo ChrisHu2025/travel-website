@@ -1,13 +1,10 @@
 ---
-import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection('in-season');
-  return entries.map(entry => ({
-    params: { slug: entry.data.path },
-    props: { entry },
-  }));
+  return entries.map(entry => ({ params: { slug: entry.data.path }, props: { entry } }));
 }
 
 const { entry } = Astro.props;
@@ -15,39 +12,38 @@ const { Content } = await entry.render();
 ---
 
 <Layout title={entry.data.title}>
-  <div class="min-h-screen bg-white">
-    <!-- Split Layout Header -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 h-auto lg:h-[80vh]">
-        <div class="relative h-[50vh] lg:h-auto order-2 lg:order-1">
-            <img src={entry.data.image} alt={entry.data.title} class="w-full h-full object-cover" />
-        </div>
-        <div class="flex flex-col justify-center p-8 lg:p-20 bg-gray-900 text-white order-1 lg:order-2">
-            <span class="text-indigo-400 font-bold tracking-wider uppercase mb-4">Seasonal Pick</span>
-            <h1 class="text-4xl lg:text-6xl font-serif font-bold mb-6 leading-tight">{entry.data.title}</h1>
-            <p class="text-xl text-gray-300 mb-8">{entry.data.summary}</p>
+  <article class="bg-white min-h-screen pb-20">
+    <div class="relative w-full h-[60vh] lg:h-[80vh] bg-gray-900">
+      <img src={entry.data.image} alt={entry.data.title} class="absolute inset-0 w-full h-full object-cover opacity-90" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+    </div>
 
-            <div class="grid grid-cols-2 gap-8 border-t border-gray-700 pt-8">
-                <div>
-                    <span class="block text-gray-500 text-sm uppercase mb-1">Location</span>
-                    <span class="font-bold">{entry.data.city}</span>
-                </div>
-                <div>
-                    <span class="block text-gray-500 text-sm uppercase mb-1">Best Season</span>
-                    <span class="font-bold text-indigo-400">{entry.data.best_season.join(', ')}</span>
-                </div>
+    <div class="container mx-auto px-4 max-w-3xl -mt-24 relative z-10">
+      <div class="bg-white p-8 md:p-16 shadow-2xl rounded-sm">
+        <header class="text-center mb-14 border-b border-gray-100 pb-10">
+          <span class="text-xs font-bold tracking-[0.2em] text-indigo-600 uppercase mb-4 block">In Season Now</span>
+          <h1 class="text-4xl md:text-6xl font-serif font-bold text-gray-900 mb-8 leading-tight">{entry.data.title}</h1>
+
+          <div class="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-12 text-sm font-sans text-gray-600 border-t border-gray-50 pt-8 mt-8">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Location</span>
+              <span class="font-medium text-gray-900">{entry.data.city}</span>
             </div>
-        </div>
-    </section>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Best Time</span>
+              <span class="font-medium text-indigo-600">{entry.data.best_season.join(', ')}</span>
+            </div>
+          </div>
+        </header>
 
-    <!-- Content -->
-    <section class="py-20 container mx-auto px-4 max-w-3xl">
-        <div class="prose prose-lg prose-indigo mx-auto text-gray-700">
-            <Content />
+        <div class="prose prose-lg prose-indigo mx-auto mb-10 font-serif text-xl leading-relaxed text-gray-600 italic">
+          {entry.data.summary}
         </div>
 
-        <div class="mt-16 pt-8 border-t text-center">
-            <a href="/in-season" class="text-indigo-600 font-bold hover:text-indigo-800">← Back to All Recommendations</a>
+        <div class="prose prose-lg prose-indigo mx-auto font-sans text-gray-800 prose-headings:font-serif">
+          <Content />
         </div>
-    </section>
-  </div>
+      </div>
+    </div>
+  </article>
 </Layout>

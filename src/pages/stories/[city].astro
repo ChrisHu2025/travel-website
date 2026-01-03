@@ -4,18 +4,12 @@ import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const allStories = await getCollection('stories');
-  // 提取所有城市并去重 (忽略大小写)
   const cities = [...new Set(allStories.map(s => s.data.city.toLowerCase()))];
-
   return cities.map(city => {
-    // 过滤出该城市的故事
     const filtered = allStories.filter(s => s.data.city.toLowerCase() === city);
     return {
       params: { city },
-      props: {
-        cityDisplayName: filtered[0].data.city,
-        posts: filtered
-      },
+      props: { cityDisplayName: filtered[0].data.city, posts: filtered },
     };
   });
 }
@@ -23,38 +17,24 @@ export async function getStaticPaths() {
 const { cityDisplayName, posts } = Astro.props;
 ---
 
-<Layout title={`Travel Stories in ${cityDisplayName}`}>
-  <div class="min-h-screen bg-gray-50 py-12">
+<Layout title={`Stories from ${cityDisplayName}`}>
+  <div class="min-h-screen bg-white pt-16 pb-24">
     <div class="container mx-auto px-4">
-      <div class="mb-12">
-        <a href="/stories" class="text-sm text-indigo-600 hover:underline mb-2 inline-block">← Back to All Stories</a>
-        <h1 class="text-4xl font-serif font-bold text-gray-900">Stories from {cityDisplayName}</h1>
-        <p class="text-gray-600 mt-2">Discover {posts.length} experience(s)</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <header class="mb-20 border-b border-gray-100 pb-10">
+        <a href="/stories" class="text-sm font-bold text-gray-400 hover:text-black uppercase tracking-widest mb-6 inline-block">← All Stories</a>
+        <h1 class="text-5xl md:text-7xl font-serif font-bold text-gray-900 mb-6">{cityDisplayName} <span class="text-gray-300 italic font-light">Journals</span></h1>
+      </header>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
         {posts.map((item) => (
-          <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
-            <div class="h-56 overflow-hidden">
-              <img
-                src={item.data.image}
-                alt={item.data.title}
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <div class="p-6">
-              <h3 class="text-xl font-serif font-bold text-gray-900 mb-3">
-                {item.data.card_title || item.data.title}
+          <article class="group">
+            <a href={`/stories/${item.data.path}/`} class="block mb-5 overflow-hidden aspect-video bg-gray-100">
+              <img src={item.data.image} alt={item.data.title} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            </a>
+            <div>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">{new Date(item.data.date).getFullYear()}</span>
+              <h3 class="text-xl font-serif font-bold text-gray-900 mb-3 leading-snug group-hover:underline decoration-1 underline-offset-4">
+                <a href={`/stories/${item.data.path}/`}>{item.data.card_title}</a>
               </h3>
-              <p class="text-gray-600 mb-4 line-clamp-3 text-sm">
-                {item.data.card_summary}
-              </p>
-              <a href={`/stories/${item.data.path}/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
-                Read Story
-                <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
             </div>
           </article>
         ))}

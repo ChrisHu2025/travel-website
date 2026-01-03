@@ -4,7 +4,6 @@ import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const entries = await getCollection('stories');
-  // 核心：使用 path 字段作为路由
   return entries.map(entry => ({
     params: { slug: entry.data.path },
     props: { entry },
@@ -13,72 +12,47 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
-
-const pageTitle = entry.data.title ? `${entry.data.title}` : 'Story';
 ---
 
-<Layout title={pageTitle}>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Hero Image -->
-    <section class="relative h-[60vh] md:h-[70vh]">
-      <div class="absolute inset-0">
-        <img
-          src={entry.data.image}
-          alt={entry.data.title}
-          class="w-full h-full object-cover"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
-      </div>
-      <div class="container mx-auto px-4 h-full flex flex-col justify-end">
-        <div class="max-w-4xl pb-12 md:pb-20">
-          <div class="flex flex-wrap items-center text-white text-sm mb-4">
-             <a href="/stories" class="hover:text-indigo-300 transition-colors">Stories</a>
-             <span class="mx-2">•</span>
-             <a href={`/stories/${entry.data.city.toLowerCase()}`} class="hover:text-indigo-300 transition-colors">{entry.data.city}</a>
+<Layout title={`${entry.data.title} - Explore China`}>
+  <article class="bg-white min-h-screen pb-20">
+    <!-- Hero -->
+    <div class="relative w-full h-[60vh] bg-gray-900">
+      <img src={entry.data.image} alt={entry.data.title} class="absolute inset-0 w-full h-full object-cover opacity-80" />
+      <div class="absolute inset-0 bg-black/20"></div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-3xl -mt-24 relative z-10">
+      <div class="bg-white p-8 md:p-16 shadow-xl rounded-sm">
+
+        <header class="text-center mb-14 border-b border-gray-100 pb-10">
+          <div class="text-xs font-bold tracking-[0.2em] text-indigo-600 uppercase mb-4">Travel Story</div>
+          <h1 class="text-3xl md:text-5xl font-serif font-bold text-gray-900 mb-6 leading-tight">{entry.data.title}</h1>
+
+          <!-- Metadata -->
+          <div class="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm font-sans text-gray-500">
+            <span>By <strong class="text-gray-900">{entry.data.author}</strong></span>
+            <span class="hidden sm:inline">•</span>
+            <time datetime={entry.data.date.toISOString()}>
+              {new Date(entry.data.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </time>
           </div>
-          <h1 class="text-3xl md:text-5xl font-serif font-bold text-white max-w-3xl leading-tight">
-            {entry.data.title}
-          </h1>
-          <p class="text-xl text-gray-200 mt-4 max-w-3xl">{entry.data.summary}</p>
+
+          <!-- Location Info (Minimal) -->
+          <div class="mt-8 pt-8 border-t border-gray-50 flex justify-center gap-8 text-xs font-bold tracking-widest text-gray-400 uppercase">
+            <a href={`/stories/${entry.data.city.toLowerCase()}`} class="hover:text-black transition-colors border-b border-transparent hover:border-black">{entry.data.city}</a>
+            <span>{entry.data.region}</span>
+          </div>
+        </header>
+
+        <div class="prose prose-lg prose-indigo mx-auto mb-10 font-serif text-xl leading-relaxed text-gray-600 italic">
+          {entry.data.summary}
+        </div>
+
+        <div class="prose prose-lg prose-indigo mx-auto font-sans text-gray-800 prose-headings:font-serif">
+          <Content />
         </div>
       </div>
-    </section>
-
-    <!-- Content -->
-    <section class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <div class="max-w-4xl mx-auto prose prose-lg">
-
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
-            <div>
-              <h2 class="text-2xl font-serif font-bold text-gray-900 mb-3">
-                {entry.data.card_title || 'Story Overview'}
-              </h2>
-              <p class="text-gray-700 text-lg">{entry.data.card_summary}</p>
-            </div>
-          </div>
-
-          <!-- Markdown Content -->
-          <div class="space-y-12 text-gray-700">
-             <Content />
-          </div>
-
-          <!-- Info Box -->
-          <div class="mt-16 bg-indigo-50 rounded-2xl p-8 border border-indigo-100">
-            <h3 class="text-xl font-serif font-bold text-indigo-900 mb-6">Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 class="font-bold text-gray-800 mb-2">Best Time to Visit</h4>
-                <p class="text-gray-600">{entry.data.best_season.join(', ')}</p>
-              </div>
-              <div>
-                <h4 class="font-bold text-gray-800 mb-2">Region</h4>
-                <p class="text-gray-600">{entry.data.region}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
+    </div>
+  </article>
 </Layout>

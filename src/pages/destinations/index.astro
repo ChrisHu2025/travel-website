@@ -2,117 +2,42 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
-// 1. 获取所有目的地数据
 const allDestinations = await getCollection('destinations');
-
-// 2. 提取所有 Region 用于筛选
 const regions = [...new Set(allDestinations.map(d => d.data.region))];
-
-// 3. 找出 Featured (用于 Hero 区域) 和 其他 (用于网格)
-const featuredDest = allDestinations.find(d => d.data.featured) || allDestinations[0];
-const otherDestinations = allDestinations.filter(d => d.id !== featuredDest.id);
 ---
 
-<Layout title="Destinations - Explore China">
-  <div class="min-h-screen bg-gray-50">
-    <!-- 顶部：Hero 区域 -->
-    <section class="py-12 container mx-auto px-4">
-      <!-- 简单的 Region 筛选器 (新增功能) -->
-      <div class="mb-8 flex flex-wrap gap-4 justify-center">
-        <span class="text-gray-500 font-medium self-center">Filter by Region:</span>
-        {regions.map(r => (
-           <span class="px-3 py-1 bg-white border rounded-full text-sm text-gray-700">{r}</span>
+<Layout title="All Destinations - Explore China">
+  <div class="min-h-screen bg-white py-16">
+    <div class="container mx-auto px-4">
+      <header class="text-center mb-24">
+        <h1 class="text-5xl md:text-7xl font-serif font-bold text-gray-900 mb-6 tracking-tight">Destinations</h1>
+        <p class="text-xl text-gray-500 font-serif italic max-w-2xl mx-auto">Curated guides to China's most breathtaking regions.</p>
+      </header>
+
+      <div class="space-y-32">
+        {regions.map(region => (
+          <section>
+            <div class="flex items-end justify-between mb-12 border-b border-gray-100 pb-4">
+              <h2 class="text-3xl font-serif font-bold text-gray-900">{region}</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+              {allDestinations.filter(d => d.data.region === region).map((item) => (
+                <article class="group cursor-pointer">
+                  <a href={`/destinations/${item.data.path}/`} class="block mb-5 overflow-hidden bg-gray-100 relative aspect-[3/4]">
+                    <img src={item.data.image} alt={item.data.title} class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                  </a>
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-bold tracking-widest text-indigo-600 uppercase mb-2">{item.data.city}</span>
+                    <h3 class="text-xl font-serif font-bold text-gray-900 leading-snug mb-2 group-hover:text-gray-600 transition-colors">
+                      <a href={`/destinations/${item.data.path}/`}>{item.data.card_title}</a>
+                    </h3>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- 左侧大卡片 (Featured) -->
-        <div class="lg:col-span-2">
-          <div class="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 h-[500px]">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent z-10"></div>
-            <img
-              src={featuredDest.data.image}
-              alt={featuredDest.data.title}
-              class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div class="absolute bottom-0 left-0 right-0 p-8 z-20 text-white">
-              <span class="inline-block px-4 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-sm font-medium mb-4">
-                Featured
-              </span>
-              <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4 leading-tight">
-                {featuredDest.data.title}
-              </h2>
-              <p class="text-lg opacity-90 mb-6 max-w-2xl">
-                {featuredDest.data.summary}
-              </p>
-              <!-- 核心：链接使用 path 字段 -->
-              <a href={`/destinations/${featuredDest.data.path}/`} class="inline-flex items-center text-white font-medium text-lg group/btn">
-                Discover
-                <svg class="ml-2 w-5 h-5 transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- 右侧：展示前2个其他目的地 -->
-        <div class="space-y-8">
-          {otherDestinations.slice(0, 2).map((item) => (
-            <div class="group relative overflow-hidden rounded-xl shadow-md hover:shadow-lg transition-shadow h-64">
-              <img
-                src={item.data.image}
-                alt={item.data.title}
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
-                <h3 class="text-xl font-serif font-bold">{item.data.card_title || item.data.title}</h3>
-                <p class="text-gray-200 mt-2 text-sm line-clamp-2">{item.data.card_summary}</p>
-                <a href={`/destinations/${item.data.path}/`} class="mt-3 inline-block text-indigo-300 hover:text-white transition-colors font-medium text-sm">
-                  View Details →
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-
-    <!-- 下滑页：所有目的地列表 -->
-    <section class="py-16 bg-gray-50">
-      <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-serif font-bold text-gray-900 mb-8">All Destinations</h2>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {otherDestinations.map((item) => (
-            <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
-              <div class="h-48 overflow-hidden">
-                <img
-                  src={item.data.image}
-                  alt={item.data.title}
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div class="p-5">
-                <div class="flex items-center text-sm text-gray-500 mb-3">
-                  <span>{item.data.city}</span>
-                  <span class="mx-2">•</span>
-                  <span>{item.data.region}</span>
-                </div>
-                <h3 class="text-lg font-serif font-bold text-gray-900 mb-2">{item.data.title}</h3>
-                <p class="text-gray-600 mb-4 line-clamp-2 text-sm">{item.data.card_summary}</p>
-                <a href={`/destinations/${item.data.path}/`} class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium text-sm group/btn">
-                  Explore
-                  <svg class="ml-1 w-4 h-4 opacity-0 group-hover/btn:opacity-100 transform group-hover/btn:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
+    </div>
   </div>
 </Layout>
