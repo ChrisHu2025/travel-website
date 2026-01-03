@@ -1,6 +1,6 @@
 ---
-import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection('stories');
@@ -12,47 +12,95 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
+
+// --- 获取相关故事 ---
+const allStories = await getCollection('stories');
+const relatedStories = allStories
+  .filter(s => s.id !== entry.id)
+  .sort(() => 0.5 - Math.random()) // 随机推荐
+  .slice(0, 3);
+
+// ✅ 防御性日期处理
+// 如果 Markdown 里没写 date，或者解析失败，默认使用当前时间，防止构建崩溃
+const safeDate = entry.data.date ? new Date(entry.data.date) : new Date();
+const isoDate = safeDate instanceof Date && !isNaN(safeDate.valueOf()) ? safeDate.toISOString() : new Date().toISOString();
+const displayDate = safeDate instanceof Date && !isNaN(safeDate.valueOf())
+  ? safeDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  : 'Recently';
 ---
 
 <Layout title={`${entry.data.title} - Explore China`}>
   <article class="bg-white min-h-screen pb-20">
+
     <!-- Hero -->
-    <div class="relative w-full h-[60vh] bg-gray-900">
+    <div class="relative w-full h-[50vh] md:h-[70vh] bg-gray-900">
       <img src={entry.data.image} alt={entry.data.title} class="absolute inset-0 w-full h-full object-cover opacity-80" />
-      <div class="absolute inset-0 bg-black/20"></div>
-    </div>
+      <div class="absolute inset-0 bg-black/30"></div>
 
-    <div class="container mx-auto px-4 max-w-3xl -mt-24 relative z-10">
-      <div class="bg-white p-8 md:p-16 shadow-xl rounded-sm">
+      <div class="absolute bottom-0 left-0 w-full p-8 md:p-16 text-center z-10 text-white">
+        <span class="text-xs font-bold tracking-[0.2em] uppercase mb-4 block text-yellow-400">Travel Story</span>
+        <h1 class="text-3xl md:text-6xl font-serif font-bold mb-6 leading-tight max-w-4xl mx-auto">
+          {entry.data.title}
+        </h1>
 
-        <header class="text-center mb-14 border-b border-gray-100 pb-10">
-          <div class="text-xs font-bold tracking-[0.2em] text-indigo-600 uppercase mb-4">Travel Story</div>
-          <h1 class="text-3xl md:text-5xl font-serif font-bold text-gray-900 mb-6 leading-tight">{entry.data.title}</h1>
-
-          <!-- Metadata -->
-          <div class="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm font-sans text-gray-500">
-            <span>By <strong class="text-gray-900">{entry.data.author}</strong></span>
-            <span class="hidden sm:inline">•</span>
-            <time datetime={entry.data.date.toISOString()}>
-              {new Date(entry.data.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </time>
-          </div>
-
-          <!-- Location Info (Minimal) -->
-          <div class="mt-8 pt-8 border-t border-gray-50 flex justify-center gap-8 text-xs font-bold tracking-widest text-gray-400 uppercase">
-            <a href={`/stories/${entry.data.city.toLowerCase()}`} class="hover:text-black transition-colors border-b border-transparent hover:border-black">{entry.data.city}</a>
-            <span>{entry.data.region}</span>
-          </div>
-        </header>
-
-        <div class="prose prose-lg prose-indigo mx-auto mb-10 font-serif text-xl leading-relaxed text-gray-600 italic">
-          {entry.data.summary}
-        </div>
-
-        <div class="prose prose-lg prose-indigo mx-auto font-sans text-gray-800 prose-headings:font-serif">
-          <Content />
+        <!-- Metadata -->
+        <div class="flex justify-center items-center gap-4 text-sm font-sans opacity-90">
+          <span class="font-bold">{entry.data.author}</span>
+          <span>•</span>
+          <!-- ✅ 使用安全的日期变量 -->
+          <time datetime={isoDate}>
+            {displayDate}
+          </time>
         </div>
       </div>
     </div>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 max-w-3xl py-16 relative z-10 bg-white">
+      <!-- 极简信息条 -->
+      <div class="flex justify-between items-center text-xs font-bold tracking-widest uppercase text-gray-400 border-b border-gray-100 pb-8 mb-12">
+        <a href={`/stories/${entry.data.city.toLowerCase()}`} class="hover:text-black">{entry.data.city}</a>
+        <span>{entry.data.region}</span>
+      </div>
+
+      <!-- Intro -->
+      <div class="prose prose-xl prose-stone mx-auto mb-10 font-serif leading-relaxed text-gray-600 italic">
+        {entry.data.summary}
+      </div>
+
+      <!-- Body -->
+      <div class="prose prose-lg prose-stone mx-auto font-sans text-gray-800">
+        <Content />
+      </div>
+
+      <!-- Author Box (底部) -->
+      <div class="mt-16 pt-10 border-t border-gray-100 flex items-center gap-4">
+        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-serif text-xl font-bold">
+          {entry.data.author ? entry.data.author.charAt(0) : 'E'}
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">Written By</p>
+          <p class="font-serif text-lg text-gray-900">{entry.data.author || 'Explore China Team'}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Read Next -->
+    <section class="py-20 bg-stone-50">
+      <div class="container mx-auto px-4 max-w-5xl">
+        <h3 class="font-serif text-2xl mb-10 text-gray-900">Read Next</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {relatedStories.map(story => (
+            <a href={`/stories/${story.data.path}/`} class="group block">
+              <div class="aspect-video overflow-hidden mb-4 bg-gray-200">
+                <img src={story.data.image} alt={story.data.title} class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+              <h4 class="font-serif text-lg text-gray-900 leading-snug group-hover:text-gray-600 transition-colors">{story.data.card_title}</h4>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
   </article>
 </Layout>
