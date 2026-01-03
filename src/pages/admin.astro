@@ -17,40 +17,45 @@ const serializedConfig = JSON.stringify({
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Content Manager</title>
 
-  <!-- ✅ 1. 引入 Netlify Identity 脚本 (必须) -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- ✅ 移除了 Identity 的 CDN 链接 -->
 
+  <!-- Decap CMS 核心库 (保留 CDN 方式，这是官方允许的混合模式，且最稳定) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/cms.css" />
 </head>
 <body>
   <div id="nc-root"></div>
 
-  <!-- 注入配置 -->
+  <!-- 注入 Config -->
   <script id="cms-config" type="application/json" is:inline set:html={serializedConfig}></script>
 
-  <!-- 2. 手动初始化标记 -->
+  <!-- 手动初始化标记 -->
   <script is:inline>window.CMS_MANUAL_INIT = true;</script>
 
-  <!-- 3. 加载 CMS 核心 -->
+  <!-- Decap CMS 脚本 -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@3.9.0/dist/decap-cms.js"></script>
 
-  <!-- 4. 初始化脚本 -->
-  <script is:inline>
+  <!-- ✅ 标准初始化逻辑 -->
+  <script>
+    // 1. 导入 Identity 模块 (确保在 Admin 页面也能正常加载)
+    import netlifyIdentity from 'netlify-identity-widget';
+
+    // 2. 挂载到 window (关键！Decap CMS 依赖这个变量来自动处理登录)
+    window.netlifyIdentity = netlifyIdentity;
+    netlifyIdentity.init();
+
+    // 3. 初始化 CMS
     window.addEventListener('load', function() {
       const configEl = document.getElementById('cms-config');
-      if (!window.CMS) return;
+      if (window.CMS && configEl) {
+        const config = JSON.parse(configEl.textContent);
 
-      const config = JSON.parse(configEl.textContent);
+        // 启动 CMS
+        CMS.init({ config });
 
-      // Netlify 模式下不需要动态注入 base_url，直接初始化即可
-      CMS.init({ config });
-
-      // ✅ 5. 监听 Netlify Identity 登录事件
-      // 这一步确保登录后自动刷新页面进入 CMS 后台，而不需要手动刷新
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", user => {
+        // 绑定登录成功后的刷新逻辑
+        netlifyIdentity.on("init", user => {
           if (!user) {
-            window.netlifyIdentity.on("login", () => {
+            netlifyIdentity.on("login", () => {
               document.location.reload();
             });
           }
