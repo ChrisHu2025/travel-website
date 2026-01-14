@@ -19,7 +19,7 @@ export const SEASONS = [
   'All Year'
 ] as const;
 
-// 通用基础字段 (用于所有板块)
+// 通用基础字段
 const baseFields = [
   { label: 'Full Title (H1)', name: 'title', widget: 'string', required: true, hint: 'SEO Title' },
   { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
@@ -50,14 +50,19 @@ const baseFields = [
   { label: 'SEO Summary / Intro', name: 'summary', widget: 'text', required: true },
   { label: 'Cover Image', name: 'image', widget: 'image', required: true },
   { label: 'Featured', name: 'featured', widget: 'boolean', default: false },
-  { label: 'URL Path', name: 'path', widget: 'string', required: true, hint: 'city/slug' },
+  {
+    label: 'URL Path',
+    name: 'path',
+    widget: 'string',
+    required: true,
+    hint: 'Format: city/slug (e.g. beijing/forbidden-city)'
+  },
   { label: 'Content', name: 'body', widget: 'markdown', required: true }
 ];
 
-// Destinations 专用扩展字段 (Gallery & Highlights)
+// Destinations 专用扩展字段
 const destinationFields = [
   ...baseFields,
-  // ✨ 新增：图集 (支持多图轮播)
   {
     label: 'Image Gallery',
     name: 'gallery',
@@ -67,7 +72,6 @@ const destinationFields = [
     required: false,
     hint: 'Upload 3-5 images for the carousel display.'
   },
-  // ✨ 新增：亮点 (Bullet Points)
   {
     label: 'Key Highlights',
     name: 'highlights',
@@ -93,6 +97,40 @@ export const cmsConfig = {
   load_config_file: false,
 
   collections: [
+    // ✨ 新增：城市管理 (Cities)
+    {
+      name: 'cities',
+      label: 'Cities (Cover Images)',
+      label_singular: 'City Profile',
+      folder: 'src/content/cities',
+      create: true,
+      slug: '{{slug}}',
+      fields: [
+        {
+          label: 'City Name',
+          name: 'title',
+          widget: 'string',
+          required: true,
+          hint: 'Must match the City field in Destinations exactly (e.g. Beijing)'
+        },
+        { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
+        {
+          label: 'City Cover Image',
+          name: 'image',
+          widget: 'image',
+          required: true,
+          hint: 'High quality cover for L1 Index page'
+        },
+        {
+          label: 'City Description',
+          name: 'description',
+          widget: 'text',
+          required: false,
+          hint: 'Short intro for L1 page'
+        }
+      ]
+    },
+    // 1. Destinations
     {
       name: 'destinations',
       label: 'Destinations',
@@ -100,8 +138,9 @@ export const cmsConfig = {
       folder: 'src/content/destinations',
       create: true,
       slug: '{{slug}}',
-      fields: destinationFields // 使用扩展后的字段
+      fields: destinationFields
     },
+    // 2. Stories
     {
       name: 'stories',
       label: 'Stories',
@@ -123,6 +162,7 @@ export const cmsConfig = {
         ...baseFields.slice(9)
       ]
     },
+    // 3. Resorts
     {
       name: 'resorts',
       label: 'Resorts',
@@ -142,6 +182,7 @@ export const cmsConfig = {
         ...baseFields.slice(3)
       ]
     },
+    // 4. In-Season
     {
       name: 'in-season',
       label: 'In-Season',
@@ -151,6 +192,7 @@ export const cmsConfig = {
       slug: '{{slug}}',
       fields: baseFields
     },
+    // 5. Homepage
     {
       name: 'homepage',
       label: 'Homepage',

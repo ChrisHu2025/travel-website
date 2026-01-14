@@ -1,7 +1,6 @@
 // src/content/config.ts
 import { defineCollection, z } from 'astro:content';
 
-// 1. 定义区域枚举 (Single Source of Truth)
 const REGIONS = [
   'North China',
   'Northeast China',
@@ -13,53 +12,46 @@ const REGIONS = [
   'Hong Kong, Macau & Taiwan'
 ] as const;
 
-// 2. 定义通用数据模型 (Unified Schema)
-// 适用于 destinations, in-season, resorts, stories
+// 通用 Schema
 const commonSchema = z.object({
   title: z.string(),
   region: z.enum(REGIONS),
   city: z.string(),
-  // 必须是数组，例如 ["Spring (Mar-May)", "Autumn (Sep-Nov)"]
   best_season: z.array(z.string()),
-  card_title: z.string().max(50, 'Card title too long'), // 稍微放宽一点限制用于测试
+  card_title: z.string().max(50, 'Card title too long'),
   card_summary: z.string(),
   summary: z.string(),
   image: z.string(),
   featured: z.boolean().default(false),
-  // 核心逻辑字段：URL 路径
-  path: z
-    .string()
-    .regex(
-      /^[a-z0-9-]+\/[a-z0-9-]+$/,
-      "Path must be in format 'city/slug' (e.g. beijing/forbidden-city)"
-    )
+  path: z.string().regex(/^[a-z0-9-]+\/[a-z0-9-]+$/, "Path must be 'city/slug'"),
+  // Destinations 专用可选字段
+  gallery: z.array(z.string()).optional(),
+  highlights: z.array(z.string()).optional(),
+  // Stories 专用可选字段
+  author: z.string().optional(),
+  date: z.date().optional(),
+  // Resorts 专用可选字段
+  category: z.string().optional()
 });
 
-// 3. 应用 Schema 到各个集合
-const destinations = defineCollection({
-  type: 'content',
-  schema: commonSchema
+// ✨ 新增：Cities Schema
+const citiesSchema = z.object({
+  title: z.string(), // City Name
+  region: z.enum(REGIONS),
+  image: z.string(), // Cover Image
+  description: z.string().optional()
 });
 
-const inSeason = defineCollection({
-  type: 'content',
-  schema: commonSchema
-});
+const destinations = defineCollection({ type: 'content', schema: commonSchema });
+const inSeason = defineCollection({ type: 'content', schema: commonSchema });
+const resorts = defineCollection({ type: 'content', schema: commonSchema });
+const stories = defineCollection({ type: 'content', schema: commonSchema });
+const cities = defineCollection({ type: 'content', schema: citiesSchema });
 
-const resorts = defineCollection({
-  type: 'content',
-  schema: commonSchema
-});
-
-const stories = defineCollection({
-  type: 'content',
-  schema: commonSchema
-});
-
-// 4. 导出集合
 export const collections = {
   destinations,
   'in-season': inSeason,
   resorts,
-  stories
+  stories,
+  cities // 导出 cities
 };

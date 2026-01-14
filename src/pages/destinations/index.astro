@@ -1,43 +1,95 @@
 ---
-import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
 
 const allDestinations = await getCollection('destinations');
+const allCities = await getCollection('cities'); // 读取手动配置的城市数据
+
+// 1. 获取所有 Region
 const regions = [...new Set(allDestinations.map(d => d.data.region))];
+
+// 2. 辅助函数：获取 Region 下的城市及封面
+function getCitiesInRegion(region: string) {
+  const postsInRegion = allDestinations.filter(d => d.data.region === region);
+  const uniqueCityNames = [...new Set(postsInRegion.map(d => d.data.city))];
+
+  return uniqueCityNames.map(cityName => {
+    // 统计景点数量
+    const cityPosts = postsInRegion.filter(d => d.data.city === cityName);
+
+    // A. 尝试从 cities 集合获取手动配置的封面
+    const manualConfig = allCities.find(c => c.data.title.toLowerCase() === cityName.toLowerCase());
+
+    // B. 如果没有手动配置，则自动抓取（优先 Featured）
+    const autoCover = cityPosts.find(p => p.data.featured) || cityPosts[0];
+
+    // 最终封面图
+    const coverImage = manualConfig ? manualConfig.data.image : autoCover.data.image;
+
+    return {
+      name: cityName,
+      image: coverImage,
+      count: cityPosts.length,
+      url: `/destinations/${cityName.toLowerCase()}/`
+    };
+  });
+}
 ---
 
 <Layout title="All Destinations - Explore China">
   <div class="min-h-screen bg-white py-16">
     <div class="container mx-auto px-4">
+
       <header class="text-center mb-24">
+        <span class="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase mb-4 block">Travel Guide</span>
         <h1 class="text-5xl md:text-7xl font-serif font-bold text-gray-900 mb-6 tracking-tight">Destinations</h1>
-        <p class="text-xl text-gray-500 font-serif italic max-w-2xl mx-auto">Curated guides to China's most breathtaking regions.</p>
+        <p class="text-xl text-gray-500 font-serif italic max-w-2xl mx-auto">
+          Explore China region by region. Select a city to begin your journey.
+        </p>
       </header>
 
       <div class="space-y-32">
-        {regions.map(region => (
-          <section>
-            <div class="flex items-end justify-between mb-12 border-b border-gray-100 pb-4">
-              <h2 class="text-3xl font-serif font-bold text-gray-900">{region}</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-              {allDestinations.filter(d => d.data.region === region).map((item) => (
-                <article class="group cursor-pointer">
-                  <a href={`/destinations/${item.data.path}/`} class="block mb-5 overflow-hidden bg-gray-100 relative aspect-[3/4]">
-                    <img src={item.data.image} alt={item.data.title} class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
-                  </a>
-                  <div class="flex flex-col">
-                    <span class="text-[10px] font-bold tracking-widest text-indigo-600 uppercase mb-2">{item.data.city}</span>
-                    <h3 class="text-xl font-serif font-bold text-gray-900 leading-snug mb-2 group-hover:text-gray-600 transition-colors">
-                      <a href={`/destinations/${item.data.path}/`}>{item.data.card_title}</a>
-                    </h3>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        ))}
+        {regions.map(region => {
+          const cities = getCitiesInRegion(region);
+          if (cities.length === 0) return null;
+
+          return (
+            <section id={region.toLowerCase().replace(/\s+/g, '-')}>
+              <div class="flex items-end justify-between mb-12 border-b border-gray-100 pb-4">
+                <h2 class="text-3xl font-serif font-bold text-gray-900">{region}</h2>
+                <span class="text-sm font-sans text-gray-400 uppercase tracking-wider">{cities.length} Cities</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+                {cities.map((city) => (
+                  <article class="group cursor-pointer">
+                    <a href={city.url} class="block mb-5 overflow-hidden bg-gray-100 relative aspect-[4/3]">
+                      <img
+                        src={city.image}
+                        alt={city.name}
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-sm text-xs font-bold uppercase tracking-wide text-gray-800">
+                        {city.count} {city.count > 1 ? 'Places' : 'Place'}
+                      </div>
+                    </a>
+
+                    <div class="flex flex-col text-center">
+                      <h3 class="text-2xl font-serif font-bold text-gray-900 leading-snug mb-2 group-hover:text-indigo-700 transition-colors">
+                        <a href={city.url}>{city.name}</a>
+                      </h3>
+                      <a href={city.url} class="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-black transition-colors">
+                        Explore City Guide &rarr;
+                      </a>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
+
     </div>
   </div>
 </Layout>
