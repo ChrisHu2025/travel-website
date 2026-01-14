@@ -1,6 +1,5 @@
 // src/lib/cms/config.ts
 
-// 1. 定义标准区域
 export const REGIONS = [
   'North China',
   'Northeast China',
@@ -12,7 +11,6 @@ export const REGIONS = [
   'Hong Kong, Macau & Taiwan'
 ] as const;
 
-// 2. 定义标准季节 (固定5个选项)
 export const SEASONS = [
   'Spring (Mar-May)',
   'Summer (Jun-Aug)',
@@ -21,17 +19,9 @@ export const SEASONS = [
   'All Year'
 ] as const;
 
-const commonFields = [
-  // H1 标题
-  {
-    label: 'Full Title (H1)',
-    name: 'title',
-    widget: 'string',
-    required: true,
-    hint: 'SEO Title for the page header'
-  },
-
-  // 核心元数据 (Travel Essentials)
+// 通用基础字段 (用于所有板块)
+const baseFields = [
+  { label: 'Full Title (H1)', name: 'title', widget: 'string', required: true, hint: 'SEO Title' },
   { label: 'Region', name: 'region', widget: 'select', options: REGIONS, required: true },
   { label: 'City', name: 'city', widget: 'string', required: true },
   {
@@ -43,48 +33,52 @@ const commonFields = [
     required: true,
     hint: 'Select all that apply'
   },
-
-  // 卡片展示专用 (不显示在正文)
   {
     label: 'Card Title (Short)',
     name: 'card_title',
     widget: 'string',
     required: true,
-    hint: 'Short title for grid view'
+    hint: 'For grid view'
   },
   {
     label: 'Card Summary',
     name: 'card_summary',
     widget: 'text',
     required: true,
-    hint: 'Short description for grid view'
+    hint: 'For grid view'
   },
-
-  // SEO & Intro
-  {
-    label: 'SEO Summary / Intro',
-    name: 'summary',
-    widget: 'text',
-    required: true,
-    hint: 'Appears at the top of the article body'
-  },
-
-  // 封面图 (单张)
+  { label: 'SEO Summary / Intro', name: 'summary', widget: 'text', required: true },
   { label: 'Cover Image', name: 'image', widget: 'image', required: true },
-
   { label: 'Featured', name: 'featured', widget: 'boolean', default: false },
-
-  // 逻辑 URL
-  {
-    label: 'URL Path',
-    name: 'path',
-    widget: 'string',
-    required: true,
-    hint: 'Format: city/slug (e.g. beijing/forbidden-city)'
-  },
-
-  // 正文 (支持插入多图 + Alt Text)
+  { label: 'URL Path', name: 'path', widget: 'string', required: true, hint: 'city/slug' },
   { label: 'Content', name: 'body', widget: 'markdown', required: true }
+];
+
+// Destinations 专用扩展字段 (Gallery & Highlights)
+const destinationFields = [
+  ...baseFields,
+  // ✨ 新增：图集 (支持多图轮播)
+  {
+    label: 'Image Gallery',
+    name: 'gallery',
+    widget: 'list',
+    summary: '{{fields.image}}',
+    field: { label: 'Image', name: 'image', widget: 'image' },
+    required: false,
+    hint: 'Upload 3-5 images for the carousel display.'
+  },
+  // ✨ 新增：亮点 (Bullet Points)
+  {
+    label: 'Key Highlights',
+    name: 'highlights',
+    widget: 'list',
+    summary: '{{fields.point}}',
+    field: { label: 'Point', name: 'point', widget: 'string' },
+    min: 3,
+    max: 3,
+    required: false,
+    hint: 'Add exactly 3 points: 2 subjective experiences + 1 objective fact.'
+  }
 ];
 
 export const cmsConfig = {
@@ -106,7 +100,7 @@ export const cmsConfig = {
       folder: 'src/content/destinations',
       create: true,
       slug: '{{slug}}',
-      fields: commonFields
+      fields: destinationFields // 使用扩展后的字段
     },
     {
       name: 'stories',
@@ -116,8 +110,7 @@ export const cmsConfig = {
       create: true,
       slug: '{{slug}}',
       fields: [
-        // Stories 需要额外的 Author 和 Date 字段
-        ...commonFields.slice(0, 9), // 复用前面的通用字段
+        ...baseFields.slice(0, 9),
         { label: 'Author', name: 'author', widget: 'string', default: 'Explore China Team' },
         {
           label: 'Publish Date',
@@ -127,7 +120,7 @@ export const cmsConfig = {
           dateFormat: 'YYYY-MM-DD',
           timeFormat: false
         },
-        ...commonFields.slice(9) // Path & Body
+        ...baseFields.slice(9)
       ]
     },
     {
@@ -138,7 +131,7 @@ export const cmsConfig = {
       create: true,
       slug: '{{slug}}',
       fields: [
-        ...commonFields.slice(0, 3), // Title, Region, City
+        ...baseFields.slice(0, 3),
         {
           label: 'Category',
           name: 'category',
@@ -146,7 +139,7 @@ export const cmsConfig = {
           options: ['Beach', 'Mountain', 'Urban', 'Cultural'],
           default: 'Beach'
         },
-        ...commonFields.slice(3)
+        ...baseFields.slice(3)
       ]
     },
     {
@@ -156,7 +149,7 @@ export const cmsConfig = {
       folder: 'src/content/in-season',
       create: true,
       slug: '{{slug}}',
-      fields: commonFields
+      fields: baseFields
     },
     {
       name: 'homepage',
